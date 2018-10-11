@@ -63,7 +63,7 @@
 	} else {
 		// Query Method: Filters
 		$args = [
-			'post_type' => 'job_listingss',
+			'post_type' => 'job_listing',
 			'post_status' => 'publish',
 			'posts_per_page' => $data['posts_per_page'],
 			'ignore_sticky_posts' => false,
