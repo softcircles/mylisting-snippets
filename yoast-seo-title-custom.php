@@ -54,7 +54,7 @@ add_filter( 'wpseo_title', function( $title ) {
 
         $meta_title = ' ' . $sep . ' ' . $site_title;
 
-        $listing_name = str_replace( ' ',  '_', $listing->get_name() );
+        $listing_name = $listing->get_name();
 
         $related_listing = $listing->get_field('related_listing');
 
