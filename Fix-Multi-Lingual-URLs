@@ -1,0 +1,20 @@
+/**
+ * Fix multi-lingual urls
+ */
+add_action( 'save_post', function ( $post_id, $post ) {
+    // Do nothing if job_listing
+    if ( 'job_listing' != $post->post_type ) {
+        return null;
+    }
+
+    foreach ( WP_Job_Manager_Writepanels::instance()->job_listing_fields() as $key => $field ) {
+        $type = ! empty( $field['type'] ) ? $field['type'] : '';
+
+        if ( 'url' != $type ) {
+            continue;
+        }
+
+        update_post_meta( $post_id, $key, $_POST[ $key ] );
+    }
+    
+}, 99, 2 );
