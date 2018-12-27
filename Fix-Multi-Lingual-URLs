@@ -14,7 +14,7 @@ add_action( 'save_post', function ( $post_id, $post ) {
             continue;
         }
 
-        update_post_meta( $post_id, $key, $_POST[ $key ] );
+        update_post_meta( $post_id, $key, esc_url( $_POST[ $key ] ) );
     }
     
 }, 99, 2 );
