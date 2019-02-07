@@ -1,0 +1,11 @@
+<?php
+
+add_filter( 'mylisting/queries/term-list/items-per-page', function( $per_page, $taxonomy ) {
+
+    if ( $taxonomy->name == 'manufacturers-models' ) {
+        $per_page = 15;
+    }
+
+    return $per_page;
+
+}, 99, 2 );
