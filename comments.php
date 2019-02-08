@@ -106,7 +106,7 @@ if ( post_password_required() ) {
                             <!-- Cookies Field -->
                             <?php ob_start();
                             $privacy_policy = __( 'Privacy Policy', 'my-listing' );
-                            $link = '<a href="' . esc_url( get_permalink( get_option( 'wp_page_for_privacy_policy' ) ) ) . '" target="_blank" class="comment-form-policy__see-more-link">' . esc_html( $privacy_policy ) . '</a>';
+                            $link = '<a href="#" target="_blank" class="comment-form-policy__see-more-link">' . esc_html( $privacy_policy ) . '</a>';
                             ?>
 
                             <div class="comment-form-cookies-consent md-checkbox">
