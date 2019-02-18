@@ -216,9 +216,9 @@ class Promotions {
 
 				$current_priority = get_post_meta( $listing->ID, '_featured', true );
 
-				if ( absint( $current_priority ) >= 0 ) {
-					update_post_meta( $listing->ID, '_promo_package_old_priority', absint( $current_priority ) );
-				}
+				// if ( absint( $current_priority ) >= 0 ) {
+					update_post_meta( $listing->ID, '_promo_package_old_priority', $current_priority );
+				// }
 
 	            return wp_send_json( [
 	                'status'  => 'success',
@@ -434,7 +434,7 @@ class Promotions {
 
 		// Get old listing priority, before it was promoted.
 		if ( $listing_old_priority = get_post_meta( $listing_id, '_promo_package_old_priority', true ) ) {
-			update_post_meta( $listing_id, '_featured', absint( $listing_old_priority ) );
+			update_post_meta( $listing_id, '_featured', $listing_old_priority );
 		} else {
 			delete_post_meta( $listing_id, '_featured' );
 		}
