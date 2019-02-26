@@ -107,10 +107,6 @@ class Permalinks {
 
         $permalink_structure = $this->normalize_value( $option_value );
 
-        if ( ! isset( $permalink_structure['job_base'] ) ) {
-            $permalink_structure['job_base'] = '';
-        }
-
         $this->_parse_permalink_tags( $permalink_structure['job_base'] );
 
         $tag_index = 0;
@@ -261,8 +257,13 @@ class Permalinks {
 
         $structure[] = $leavename ? '%pagename%' : $post->post_name;
 
-        if ( $beamer_linkURL = get_post_meta( $post->ID, 'bmr_linkUrl', true ) ) {
-            update_post_meta( $post_ID, 'bmr_linkUrl', trailingslashit( home_url( implode( '/', $structure ) ) ) );
+        if ( get_post_meta( $post->ID, 'bmr_linkUrl', true ) ) {
+
+            global $wpdb;
+
+            $wpdb->query( $wpdb->prepare(
+                "UPDATE $wpdb->posts SET `guid` = '". trailingslashit( home_url( implode( '/', $structure ) ) ) ."' WHERE `ID` = %d", $post->ID
+            ) );
         }
 
         return trailingslashit( home_url( implode( '/', $structure ) ) );
