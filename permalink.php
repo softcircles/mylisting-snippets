@@ -570,14 +570,10 @@ class Permalinks {
 
         if ( $post_after->post_type == 'job_listing' || $this->_wp_permalink ) {
 
-            if ( ( $listing = \MyListing\Src\Listing::get( $post_after ) ) || $listing->type ) {
+            if ( ( $listing = \MyListing\Src\Listing::get( $post_after ) ) && $listing->type ) {
 
                 // Remove base from URL
                 $strip_base_url = false;
-
-                // if ( ! $this->_url_base ) {
-                //     $post_link = str_replace( '/' . $this->_default_listing_slug . '/', '', $post_link );
-                // }
 
                 $structure = [];
 
