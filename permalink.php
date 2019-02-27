@@ -64,6 +64,8 @@ class Permalinks {
             return null;
         }
 
+        remove_action( 'post_updated', 'bmr_api_call', 11, 3 );
+
         $this->set_option_name();
 
         $this->strings['missing_region'] = _x( 'unlocated', 'Permalinks > Missing Region Text', 'my-listing' );
@@ -89,6 +91,8 @@ class Permalinks {
 
         add_action( 'save_post_case27_listing_type', 'flush_rewrite_rules' );
         add_action( 'mylisting/admin/types/after-update', [ $this, 'refresh_listing_types' ] );
+
+        add_action( 'post_updated', [ $this, 'beamer_updated_permalink' ], 11, 3 );
 
         // Display docs in Settings > Permalinks.
         add_action( 'current_screen', [ $this, 'show_permalink_docs' ], 10 );
@@ -256,15 +260,6 @@ class Permalinks {
         }
 
         $structure[] = $leavename ? '%pagename%' : $post->post_name;
-
-        if ( get_post_meta( $post->ID, 'bmr_linkUrl', true ) ) {
-
-            global $wpdb;
-
-            $wpdb->query( $wpdb->prepare(
-                "UPDATE $wpdb->posts SET `guid` = '". trailingslashit( home_url( implode( '/', $structure ) ) ) ."' WHERE `ID` = %d", $post->ID
-            ) );
-        }
 
         return trailingslashit( home_url( implode( '/', $structure ) ) );
     }
@@ -567,6 +562,250 @@ class Permalinks {
         $this->_permalink_structure = ! empty( $permalink_tags ) ? $permalink_tags : [ $this->_default_listing_slug ];
 
         return $this->_permalink_structure;
+    }
+
+    public function beamer_updated_permalink( $post_ID, $post_after, $post_before ) {
+
+        $beamer_id = bmr_api_has_id($post_ID) ? bmr_api_get_id($post_ID) : 0;
+
+        if ( $post_after->post_type == 'job_listing' || $this->_wp_permalink ) {
+
+            if ( ( $listing = \MyListing\Src\Listing::get( $post_after ) ) || $listing->type ) {
+
+                // Remove base from URL
+                $strip_base_url = false;
+
+                // if ( ! $this->_url_base ) {
+                //     $post_link = str_replace( '/' . $this->_default_listing_slug . '/', '', $post_link );
+                // }
+
+                $structure = [];
+
+                foreach( $this->_permalink_structure as $structure_tag ) {
+
+                    $tag_value = '';
+
+                    switch ( $structure_tag ) {
+
+                        case '%listing_type%' :
+                            $tag_value = $listing->type->get_permalink_name();
+                        break;
+
+                        case '%listing_region%' :
+                            $regions = $listing->get_field( 'region' );
+                            if ( ! $regions ) {
+                                $tag_value = $this->strings['missing_region'];
+                                break;
+                            }
+
+                            // Consider the first region as primary region.
+                            $tag_value = $regions[0]->slug;
+                        break;
+
+                        case '%listing_category%' :
+                            $categories = $listing->get_field( 'category' );
+                            if ( ! $categories ) {
+                                $tag_value = $this->strings['missing_category'];
+                                break;
+                            }
+
+                            // Consider the first category as primary category.
+                            $tag_value = $categories[0]->slug;
+                        break;
+
+                        default :
+                            $tag_value = $structure_tag;
+                        break;
+                    }
+
+                    if ( ! $tag_value ) {
+                        continue;
+                    }
+
+                    $structure[ $structure_tag ] = $tag_value;
+                }
+
+                $structure[] = $post_after->post_name;
+
+                if ( $post_after->post_status != 'auto-draft' ) {
+
+                    $post_after->guid = trailingslashit( home_url( implode( '/', $structure ) ) );
+
+                    if( $post_after->post_status == 'trash' OR $post_after->post_status == 'draft' OR $post_after->post_status == 'pending' OR bmr_get_meta( 'bmr_ignore' ) == 'ignore' ){
+                        // DELETE
+                        $api_key = bmr_api_get_key();
+                        $api_url = bmr_api_url('posts', $beamer_id);
+
+                        // JSON here
+                        $ch = curl_init($api_url);
+                        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'DELETE');
+                        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                        curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+                            'Content-Type: application/json',
+                            'Beamer-Api-Key: '.$api_key,
+                            'User-Agent: WordPress Plugin v'.bmr_version().' (DELETE_post)'
+                        ));
+                        $result = curl_exec($ch);
+
+                        // Update post meta with the Beamer custom fields
+                        $prefix = 'bmr_';
+                        $beamer_meta = array(
+                            $prefix.'title' => $post_after->post_title,
+                            $prefix.'content' => $content,
+                            $prefix.'publish' => true,
+                            $prefix.'linkUrl' => $post_after->guid,
+                            $prefix.'date' => $date,
+                            $prefix.'id' => null
+                        );
+                        foreach($beamer_meta as $key => $var){
+                            update_post_meta($post_ID, $key, $var);
+                        }
+                    }elseif( $post_after->post_status == 'publish' OR $post_after->post_status == 'future' ){
+                        // POST
+                        $api_key = bmr_api_get_key();
+                        $api_url = bmr_api_has_id($post_ID) ? bmr_api_url('posts', $beamer_id) : bmr_api_url('posts');
+
+                        // Set date
+                        $date = $post_after->post_date_gmt;
+                        $date = str_replace(' ', 'T', $date);
+
+                        // Set content
+                        if( $post_after->post_excerpt != '' ){
+                            // Look for the excerpt
+                            $body = $post_after->post_excerpt;
+                        }else{
+                             if( strpos( $post_after->post_content, '<!--more-->' ) ){
+                                // Look for read more tag
+                                $content = $post_after->post_content;
+                                $content_extended = get_extended( $content );
+                                $content_iframe_filter = preg_replace('/<iframe.*?\/iframe>/i', '', $content_extended['main']);
+                                $content_script_filter = preg_replace('#<script(.*?)>(.*?)</script>#is', '', $content_iframe_filter);
+                                $body = $content_script_filter;
+                             }else{
+                                // Create a custom exerpt
+                                $content = $post_after->post_content;
+                                $content_iframe_filter = preg_replace('/<iframe.*?\/iframe>/i', '', $content);
+                                $content_script_filter = preg_replace('#<script(.*?)>(.*?)</script>#is', '', $content_iframe_filter);
+                                $limit = bmr_get_setting('api_excerpt');
+                                $body = $limit ? bmr_api_trim_content( $content_script_filter, $limit ) : bmr_api_trim_content( $content_script_filter );
+                             }
+                        }
+
+                        // Set Featured Image
+                        if( has_post_thumbnail($post_ID) ){
+                            $thumbnail_url = get_the_post_thumbnail_url($post_ID, 'full');
+                            $thumbnail = '<img src="'.$thumbnail_url.'" alt="'.$thumbnail_url.'"/>';
+                        }
+
+                        $content = $thumbnail ? $thumbnail.' '.$body : $body;
+
+                        // Set category
+                        $category = bmr_get_meta('bmr_category');
+
+                        // Set Read More
+                        if( bmr_get_meta('bmr_link_text') ){
+                            // Manual
+                            $readmore = bmr_get_meta('bmr_link_text');
+                        }elseif( bmr_get_setting('api_readmore') ){
+                            // Default
+                            $readmore = bmr_get_setting('api_readmore');
+                        }
+
+                        // Set feedback
+                        if( bmr_get_meta( 'bmr_feedback' ) === 'off' ){
+                            $feedback = false;
+                        }else{
+                            $feedback = true;
+                        }
+
+                        // Set reactions
+                        if( bmr_get_meta( 'bmr_reactions' ) === 'off' ){
+                            $react = false;
+                        }else{
+                            $react = true;
+                        }
+
+                        // Create data array
+                        $data = array();
+
+                            // Check array elements
+                            if( is_bool( $post_after->post_title ) === true OR is_null( $post_after->post_title ) === true ) {
+                                $data['title'] = array( '' );
+                            } else {
+                                $data['title'] = array( $post_after->post_title );
+                            }
+
+                            if( is_bool( $content ) === true OR is_null( $content ) === true ) {
+                                $data['content'] = array( '' );
+                            } else {
+                                $data['content'] = array( $content );
+                            }
+
+                            if( is_bool( $category ) === true OR is_null( $category ) === true ) {
+                                $data['category'] = 'new';
+                            } else {
+                                $data['category'] = $category;
+                            }
+
+                            $data['publish'] = true;
+
+                            if( is_bool( $post_after->guid ) === true OR is_null( $post_after->guid ) === true ) {
+                                $data['linkUrl'] = array( '' );
+                            } else {
+                                $data['linkUrl'] = array( $post_after->guid );
+                            }
+
+                            if( is_bool( $readmore ) === true OR is_null( $readmore ) === true ) {
+                                $data['linkText'] = array( 'Read More' );
+                            } else {
+                                $data['linkText'] = array( $readmore ?: 'Read more' );
+                            }
+
+                            $data['date'] = $date;
+                            $data['enableFeedback'] = $feedback;
+                            $data['enableReactions'] = $react;
+                            $data['autoOpen'] = false;
+                            $data['language'] = array( 'EN' );
+
+                        // Set request
+                        $request = bmr_api_has_id($post_ID) ? 'PUT' : 'POST';
+
+                        // Check if ignore
+                        if( bmr_get_meta( 'bmr_ignore' ) == null ){
+                            // JSON here
+                            $data_string = json_encode($data);
+                            $ch = curl_init($api_url);
+                            curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $request);
+                            curl_setopt($ch, CURLOPT_POSTFIELDS, $data_string);
+                            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                            curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+                                'Content-Type: application/json',
+                                'Beamer-Api-Key: '.$api_key,
+                                'User-Agent: WordPress Plugin (v'.bmr_version().'/php'.phpversion().'/'.$request.')'
+                            ));
+                            $result = curl_exec($ch);
+                            $decoded = json_decode($result, true);
+                        }
+
+                        // Update post meta with the Beamer custom fields
+                        $prefix = 'bmr_';
+                        $beamer_meta = array(
+                            $prefix.'title' => $post_after->post_title,
+                            $prefix.'content' => $content,
+                            $prefix.'publish' => true,
+                            $prefix.'linkUrl' => $post_after->guid,
+                            $prefix.'date' => $date
+                        );
+                        if( !bmr_api_has_id($post_ID) ){
+                            $beamer_meta[$prefix.'id'] = $decoded['id'];
+                        }
+                        foreach($beamer_meta as $key => $var){
+                            update_post_meta($post_ID, $key, $var);
+                        }
+                    }
+                }
+            }
+        }
     }
 
     public function show_permalink_docs() {
