@@ -8,7 +8,7 @@ add_action( 'init', function() {
 		$wpdb->prepare( "
 			SELECT postmeta.post_id FROM {$wpdb->postmeta} as postmeta
 			LEFT JOIN {$wpdb->posts} as posts ON postmeta.post_id = posts.ID
-			WHERE postmeta.meta_key = '_customfield'
+			WHERE postmeta.meta_key = '_sluttdato'
 			AND postmeta.meta_value > 0
 			AND postmeta.meta_value < %s
 			AND posts.post_status = 'publish'
