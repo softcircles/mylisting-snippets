@@ -40,7 +40,7 @@ function check_job_description_length() {  ?>
             }
 
             function tinymce_updateCharCounter(el, len) {
-                jQuery('#' + el.id).prev().find('.char_count').text(len + '/' + el.settings.max_chars);
+                jQuery('#' + el.id).prev().find('.char_count').text(len + '/' + visual_editor_char_limit);
             }
 
             function tinymce_getContentLength() {
