@@ -1,19 +1,11 @@
-<?php if (!class_exists('WooCommerce')) return;
-
-
-$form_action = wc_get_page_permalink('myaccount');
-
-if ( ! empty( $_GET['redirect_to'] ) ) {
-	$form_action = $_GET['redirect_to'];
-}
-?>
+<?php if (!class_exists('WooCommerce')) return;?>
 
 <div class="sign-in-box element">
 	<div class="title-style-1">
 		<i class="material-icons user-area-icon">person</i>
 		<h5><?php _e( 'Create an account', 'my-listing' ) ?></h5>
 	</div>
-	<form class="sign-in-form register" method="POST" action="<?php echo esc_url( $form_action ) ?>">
+	<form class="sign-in-form register" method="POST" action="<?php echo esc_url( $_SERVER['REQUEST_URI'] ) ?>">
 
 		<?php do_action( 'woocommerce_register_form_start' ); ?>
 
