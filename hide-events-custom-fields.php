@@ -25,11 +25,11 @@ add_filter( 'mylisting/sections/listing-feed/args', function( $args ) {
             'type' => 'DATE',
         ],
         [
-            'key' => '_job_date',
+            'key' => '_termino',
             'value' => '',
         ],
         [
-            'key' => '_job_date',
+            'key' => '_termino',
             'compare' => 'NOT EXISTS',
         ],
     ];
