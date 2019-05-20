@@ -11,7 +11,7 @@ function term_result_count( $atts = '' ) {
     $categories = (array) get_terms([
         'taxonomy' => 'job_listing_category',
         'hide_empty' => false,
-        'include' => 37
+        'include' => $atts['id']
     ]);
 
     if ( is_wp_error( $categories ) ) {
