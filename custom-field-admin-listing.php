@@ -12,7 +12,7 @@ add_filter( 'manage_job_listing_posts_custom_column', function( $column ) {
         return;
     }
 
-    $_value = absint( get_post_meta( $listing->get_id(), '_custom_field', true ) );
+    $_value = absint( get_post_meta( $listing->get_id(), '_CUSTOM_FIELD_KEY', true ) );
 
     if ( $column === 'custom_field' && $_value ) {
         $url = add_query_arg( [
@@ -32,7 +32,7 @@ add_filter( 'parse_query', function( $query ) {
         return $query;
     }
 
-    $query->query_vars['meta_key']   = '_custom_field';
+    $query->query_vars['meta_key']   = '_CUSTOM_FIELD_KEY';
     $query->query_vars['meta_value'] = $_GET['filter_by_custom_field'];
 
     return $query;
