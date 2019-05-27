@@ -48,7 +48,7 @@ class Walker extends \Walker_Comment {
 					<?php endif ?>
 
 					<h5 class="case27-secondary-text"><?php echo get_comment_author_link() ?></h5>
-					<span class="comment-date"><?php comment_date() ?> <?php _e( 'at', 'my-listing' ) ?> <?php comment_time() ?> <?php edit_comment_link( esc_html__('&middot; Edit', 'my-listing') ); ?></span>
+					<span class="comment-date"><?php comment_date() ?></span>
 
 					<?php if (!$is_reply && ($review_rating = \MyListing\Ext\Reviews\Reviews::get_rating(get_comment_ID())) && $GLOBALS['case27_reviews_allow_rating']): ?>
 						<?php mylisting_locate_template( 'partials/star-ratings.php', [
@@ -66,22 +66,6 @@ class Walker extends \Walker_Comment {
 						<?php comment_text() ?>
 					<?php endif; ?>
 				</div>
-
-				<?php
-				if ( is_user_logged_in() ) :
-
-					if ( get_the_author_meta( 'ID' ) == get_current_user_id() ) : ?>
-
-						<div class="reply comment-info">
-							<?php
-							comment_reply_link( array_merge( $args, array(
-								'depth' => $depth,
-								'max_depth' => $args['max_depth'],
-								'reply_text' => '<i class="material-icons sm-icon">chat_bubble_outline</i>' . __( 'Reply', 'my-listing' ),
-								))); ?>
-						</div>
-					<?php endif; ?>
-				<?php endif; ?>
 			</div>
 
 		<?php if (!$args['has_children']): ?>
