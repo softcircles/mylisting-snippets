@@ -21,7 +21,7 @@ $can_post = is_user_logged_in() || ! mylisting_get_setting( 'submission_requires
                 $package = get_post( $_POST['listing_package'] );
                 $package_id = $package->ID;
              ?>
-                <h2 class="case27-primary-text"><?php echo sprintf( 'Listing #%s details', $package_id ); ?></h2>
+                <h2 class="case27-primary-text"><?php echo sprintf( 'Package Id #%s', $package_id ); ?></h2>
             <?php endif; ?>
             <h2 class="case27-primary-text"><?php _ex( 'Your listing details', 'Add listing form', 'my-listing' ) ?></h2>
         </div>
