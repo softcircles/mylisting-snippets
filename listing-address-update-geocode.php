@@ -14,12 +14,12 @@ add_action( 'init', function() {
             'posts_per_page' => $next_data,
             'post_status' => ['publish', 'private', 'expired'],
             'meta_query' => [
-                // 'relation' => 'OR',
-                [ 'key' => '_job_location', 'compare' => 'NOT EXISTS' ],
+                'relation' => 'OR',
+                [ 'key' => 'geolocation_lat', 'compare' => 'NOT EXISTS' ],
+                [ 'key' => 'geolocation_long', 'compare' => 'NOT EXISTS' ],
             ],
         ] );
 
-        print_r( $listings );exit();
         printf(
             "Fetching geolocation data from listing %d to %d <br />",
             $offset + 1,
