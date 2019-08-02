@@ -10,46 +10,23 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 <?php do_action( 'mylisting/user-listings/before' ) ?>
 
-<div class="row my-listings-stat-box">
-	<?php
-	mylisting_locate_template( 'templates/dashboard/stats/card.php', [
-		'icon' => 'icon-window',
-		'value' => number_format_i18n( absint( $stats->get( 'listings.published' ) ) ),
-		'description' => _x( 'Published', 'Dashboard stats', 'my-listing' ),
-		'background' => mylisting()->stats()->color_one,
-	] );
-
-	// Pending listing count (pending_approval + pending_payment).
-	mylisting_locate_template( 'templates/dashboard/stats/card.php', [
-		'icon' => 'mi info_outline',
-		'value' => number_format_i18n( absint( $stats->get( 'listings.pending_approval' ) ) ),
-		'description' => _x( 'Pending Approval', 'Dashboard stats', 'my-listing' ),
-		'background' => mylisting()->stats()->color_two,
-	] );
-
-	// Promoted listing count.
-	mylisting_locate_template( 'templates/dashboard/stats/card.php', [
-		'icon' => 'mi info_outline',
-		'value' => number_format_i18n( absint( $stats->get( 'listings.pending_payment' ) ) ),
-		'description' => _x( 'Pending Payment', 'Dashboard stats', 'my-listing' ),
-		'background' => mylisting()->stats()->color_three,
-	] );
-
-	// Recent views card.
-	mylisting_locate_template( 'templates/dashboard/stats/card.php', [
-		'icon' => 'mi timer',
-		'value' => number_format_i18n( absint( $stats->get( 'listings.expired' ) ) ),
-		'description' => _x( 'Expired', 'Dashboard stats', 'my-listing' ),
-		'background' => mylisting()->stats()->color_four,
-	] );
-	?>
-</div>
-
 <div class="row more-actions">
 	<div class="col-md-12">
-		<a href="<?php echo esc_url( wc_get_account_endpoint_url( _x( 'claim-requests', 'Claims user dashboard page slug', 'my-listing' ) ) ) ?>" class="pull-right">
-			<?php _ex( 'View claim requests &rarr;', 'User dashboard', 'my-listing' ) ?>
-		</a>
+		<?php if ( mylisting_get_setting( 'claims_enabled' ) ):
+			$claims = get_posts( [
+				'post_type' => 'claim',
+				'post_status' => 'publish',
+				'posts_per_page' => 1,
+				'meta_key' => '_user_id',
+				'meta_value' => get_current_user_id(),
+				'fields' => 'ids',
+			] ); ?>
+			<?php if ( ! empty( $claims ) ): ?>
+				<a href="<?php echo esc_url( wc_get_account_endpoint_url( _x( 'claim-requests', 'Claims user dashboard page slug', 'my-listing' ) ) ) ?>" class="pull-right">
+					<?php _ex( 'View claim requests &rarr;', 'User dashboard', 'my-listing' ) ?>
+				</a>
+			<?php endif ?>
+		<?php endif ?>
 	</div>
 </div>
 
@@ -57,8 +34,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	<?php if ( ! $listings ) : ?>
 		<div class="no-listings">
 			<i class="no-results-icon material-icons">mood_bad</i>
-			<?php _e( 'Du har ingen profil endnu', 'my-listing' ); ?>
-            <p class="no-results-create-listing-cta"><a href="https://revisorkort.dk/opret-profil/">Opret en profil</a></p>
+			<?php _e( 'You do not have any active listings.', 'my-listing' ); ?>
 		</div>
 	<?php else : ?>
 		<table class="job-manager-jobs">
@@ -116,7 +92,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 										if ( $value['nonce'] ) {
 											$action_url = wp_nonce_url( $action_url, 'mylisting_dashboard_actions' );
 										}
-										echo '<li><a href="' . esc_url( $action_url ) . '" class="job-dashboard-action-' . esc_attr( $action ) . '">' . esc_html( $value['label'] ) . '</a></li>';
+										echo '<li class="cts-listing-action-'.esc_attr( $action ).'"><a href="' . esc_url( $action_url ) . '" class="job-dashboard-action-' . esc_attr( $action ) . '">' . esc_html( $value['label'] ) . '</a></li>';
 									}
 								}
 							?>
@@ -125,7 +101,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 						</ul>
 					</td>
 					<td class="listing-info">
-						<?php if ( $package = $listing->get_package() ): ?>
+						<?php if ( $package = $listing->get_product() ): ?>
 							<div class="info listing-package">
 								<div class="label"><?php _ex( 'Package:', 'User listings dashboard', 'my-listing' ) ?></div>
 								<div class="value"><?php echo esc_html( $package->get_name() ) ?></div>
