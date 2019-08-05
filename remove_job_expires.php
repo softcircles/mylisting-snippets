@@ -26,7 +26,7 @@ add_action( 'init', function() {
             'post_type' => 'job_listing',
             'offset'   => $offset,
             'posts_per_page' => $next_data,
-            'post_status' => [ 'published','expired' ]
+            'post_status' => 'published',
             'meta_query'    => [
                 [
                    'key'        => '_job_expires',
@@ -47,7 +47,7 @@ add_action( 'init', function() {
                 continue;
             }
 
-            printf( '<p style="color: green;">Expiry Date successful for listing #%d (%s)</p>', $listing->ID, $location );
+            printf( '<p style="color: green;">Expiry Date successful for listing #%d </p>', $listing->ID );
 
             delete_post_meta( $listing->ID, '_job_expires' );
 
@@ -55,7 +55,7 @@ add_action( 'init', function() {
             $updated = wp_update_post( array( 'ID' => $listing->ID, 'post_status' => 'publish' ) );
 
             // Check to see if loop is returning posts, and if they were updated
-            printf( '<p style="color: green;">Expiry Date successful for listing #%d (%s)</p>', $listing->ID, $updated );
+            printf( '<p style="color: green;">Expiry Date successful for listing #%d</p>', $listing->ID );
         }
 
         $offset = ( ! $offset ) ? $next_data : $offset + $next_data;
