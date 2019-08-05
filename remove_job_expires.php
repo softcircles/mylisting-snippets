@@ -1,36 +1,64 @@
 <?php
 
-add_action( 'init', function() {
+add_action( 'mylisting/admin/save-listing-data', function( $post_id, $listing ) {
 
+    // update expiry date
+    if ( isset( $_POST['mylisting_modify_expiry'] ) && $_POST['mylisting_modify_expiry'] === 'yes' ) {
+
+        if ( ! empty( $_POST['mylisting_expiry_date'] ) ) {
+            update_post_meta( $post_id, '_job_expires', strtotime( date( 'Y-m-d', $_POST['mylisting_expiry_date'] ) ) );
+        }
+
+        delete_post_meta( $post_id, '_job_expires' );
+    }
+
+}, 100, 2 );
+
+add_action( 'init', function() {
     if ( ! isset( $_GET['job_expires'] ) ) {
         return;
     }
 
-    $args = [
-        'post_type'     => 'job_listing',
-        'post_status'   => 'publish',
-        'posts_per_page'=> -1,
-        'meta_query'    => [
-            [
-               'key'        => '_job_expires',
-               'compare'    => 'EXISTS'
-            ]
-        ]
-    ];
-
-    $query = new WP_Query( $args );
-    if ( $query->have_posts() ) {
-        while ( $query->have_posts() ) {
-            $query->the_post();
-            $_job_expires = get_post_meta( get_the_ID(), '_job_expires', true );
-            if ( empty( $_job_expires ) ) {
+    $next_data = 50;
+    $offset = 0;
+    do {
+        $listings = (array) get_posts( [
+            'post_type' => 'job_listing',
+            'offset'   => $offset,
+            'posts_per_page' => $next_data,
+            'post_status' => 'expired',
+            'meta_query'    => [
+	            [
+	               'key'        => '_job_expires',
+	               'compare'    => 'EXISTS'
+	            ]
+	        ]
+        ] );
+        printf(
+            "Fetching expiry date from listing %d to %d <br />",
+            $offset + 1,
+            $offset + $next_data
+        );
+        flush();
+        ob_flush();
+        foreach ( $listings as $listing ) {
+            if ( ! ( $job_expires = get_post_meta( $listing->ID, '_job_expires', true ) ) ) {
+                printf( '<p style="color: #8e8e8e;">Skipping expiry for listing #%d (missing date)</p>', $listing->ID );
                 continue;
             }
 
-            delete_post_meta( get_the_ID(), '_job_expires' );
+            printf( '<p style="color: green;">Expiry Date successful for listing #%d (%s)</p>', $listing->ID, $location );
+
+            delete_post_meta( $listing->ID, '_job_expires' );
+
+            // Change the status of each post to pending
+            $updated = wp_update_post( array( 'ID' => $listing->ID, 'post_status' => 'publish' ) );
+
+            // Check to see if loop is returning posts, and if they were updated
+            printf( '<p style="color: green;">Expiry Date successful for listing #%d (%s)</p>', $listing->ID, $updated );
         }
-    }
 
-    exit();
-
-}, 99 );
+        $offset = ( ! $offset ) ? $next_data : $offset + $next_data;
+    } while( ! empty( $listings ) );
+    exit('All listings are updated, you can close this window.');
+}, 250 );
