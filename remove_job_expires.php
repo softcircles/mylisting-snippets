@@ -26,13 +26,13 @@ add_action( 'init', function() {
             'post_type' => 'job_listing',
             'offset'   => $offset,
             'posts_per_page' => $next_data,
-            'post_status' => 'expired',
+            'post_status' => [ 'published','expired' ]
             'meta_query'    => [
-	            [
-	               'key'        => '_job_expires',
-	               'compare'    => 'EXISTS'
-	            ]
-	        ]
+                [
+                   'key'        => '_job_expires',
+                   'compare'    => 'EXISTS'
+                ]
+            ]
         ] );
         printf(
             "Fetching expiry date from listing %d to %d <br />",
