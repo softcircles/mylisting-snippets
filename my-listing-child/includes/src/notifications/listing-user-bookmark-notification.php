@@ -8,12 +8,12 @@ if ( ! defined('ABSPATH') ) {
 
 class Listing_User_Bookmark_Notification extends Base_Notification {
 
-	public $listing;
+	public $listing, $current_user_id;
 
 	public static function hook() {
-		add_action( 'mylisting/bookmark:new-bookmark', function( $bookmark_id ) {
-			return new self( [ 'bookmark-id' => $bookmark_id ] );
-		} );
+		add_action( 'mylisting/bookmark:new-bookmark', function( $bookmark_id, $user_meta, $listing_meta, $listing ) {
+			return new self( [ 'bookmark-id' => $bookmark_id, 'current_user_id'	=> get_current_user_id() ] );
+		}, 99, 4 );
 	}
 
 	public static function settings() {
@@ -41,6 +41,7 @@ class Listing_User_Bookmark_Notification extends Base_Notification {
 
 		$this->listing = $listing;
 		$this->author = $listing->get_author();
+		$this->current_user_id = $args['current_user_id'];
 	}
 
 	public function get_mailto() {
@@ -54,14 +55,17 @@ class Listing_User_Bookmark_Notification extends Base_Notification {
 	public function get_message() {
 		$template = new Notification_Template;
 
+		$user = get_user_by( 'ID', $this->current_user_id );
+		
 		$template->add_paragraph( sprintf(
 			_x( 'Hi %s,', 'Notifications', 'my-listing' ),
 			esc_html( $this->author->first_name )
 		) );
 
 		$template->add_paragraph( sprintf(
-			_x( 'Your listing <strong>%s</strong> has been bookmarked.', 'Notifications', 'my-listing' ),
-			esc_html( $this->listing->get_name() )
+			_x( 'Your listing <strong>%s</strong> has been bookmarked by <strong>%s</strong>.', 'Notifications', 'my-listing' ),
+			esc_html( $this->listing->get_name() ),
+			esc_html( $user->data->display_name )
 		) );
 
 		$template->add_break()->add_primary_button(
