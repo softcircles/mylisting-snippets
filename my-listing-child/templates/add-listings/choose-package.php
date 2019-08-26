@@ -33,13 +33,6 @@ if ( absint( $column_count ) === 4 && $item_count >= 4 ) {
 	$item_wrapper = 'col-md-3';
 }
 
-$action = ! empty( $_GET['action'] ) ? $_GET['action'] : '';
-
-$current_package = '';
-if ( $action === 'switch' ) {
-	$current_package = 'disabled-package';
-}
-
 ?>
 
 <div class="row section-body row-eq-height">
@@ -54,9 +47,24 @@ if ( $action === 'switch' ) {
 
 		// Set checked item.
 		$checked = ( intval( $selected ) === intval( $product->get_id() ) ) ? 1 : 0;
+
+		$action = ! empty( $_GET['action'] ) ? $_GET['action'] : '';
+
+		$is_current_package = '';
+
+		if ( $action === 'switch' && $current_package = $listing->get_package() ) {
+
+			$current_product = $current_package->get_product();
+
+			if ( $current_package->get_product_id() == $product->get_id() ) {
+				$is_current_package = 'disabled-package';
+			}
+
+		}
+
 		?>
 
-		<div class="<?php echo esc_attr( $item_wrapper ) ?> col-sm-6 col-xs-12 <?php echo esc_attr( $current_package ) ?>">
+		<div class="<?php echo esc_attr( $item_wrapper ) ?> col-sm-6 col-xs-12 <?php echo esc_attr( $is_current_package ) ?>">
 			<div class="pricing-item c27-pick-package cts-pricing-item <?php echo $checked ? 'c27-picked' : ''; ?> <?php echo $featured ? 'featured' : '' ?> <?php echo ! $product->is_purchasable() ? 'not-purchasable' : '' ?>">
 				<?php if ( $featured ): ?>
 					<div class="featured-plan-badge">
