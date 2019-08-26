@@ -23,7 +23,7 @@ add_action( 'mylisting/get-listings/before-query', function ( &$args ) {
     $args['meta_query'][] = [
         'relation' => 'OR',
         [
-            'key' => '_job_date',
+            'key' => '_end-date',
             'value' => date('Y-m-d'),
             'compare' => '>=',
             'type' => 'DATE',
