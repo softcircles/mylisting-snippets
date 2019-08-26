@@ -1,5 +1,5 @@
 add_action( 'mylisting/get-listings/before-query', function ( &$args ) {
-    $listing_types = ['event'];
+    $listing_types = ['events'];
     
     if ( empty( $args['meta_query'] ) || empty( $args['meta_query']['listing_type_query'] ) ) {
         return $args;
@@ -27,14 +27,6 @@ add_action( 'mylisting/get-listings/before-query', function ( &$args ) {
             'value' => date('Y-m-d'),
             'compare' => '>=',
             'type' => 'DATE',
-        ],
-        [
-            'key' => '_job_date',
-            'value' => '',
-        ],
-        [
-            'key' => '_job_date',
-            'compare' => 'NOT EXISTS',
         ],
     ];
 }, 10 );
