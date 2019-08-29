@@ -38,9 +38,9 @@ class Related_Listings extends Query {
 		];
 
 		return $this->send( [
-			'order' => sanitize_text_field( isset( $_POST['order'] ) ? $_POST['order'] : 'DESC' ),
+			'order' => 'ASC',
 			'offset' => $page * $per_page,
-			'orderby' => sanitize_text_field( isset($_POST['orderby']) ? $_POST['orderby'] : 'date' ),
+			'orderby' => 'date',
 			'posts_per_page' => $per_page,
 			'meta_query' => $meta_query,
 			'output' => [ 'item-wrapper' => 'col-md-4 col-sm-6 col-xs-12' ],
