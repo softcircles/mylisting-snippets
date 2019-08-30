@@ -137,7 +137,7 @@ if ( post_password_required() ) {
 
                             <?php
                             $args = array(
-                                'comment_field'       => $rating_field . $gallery_field . $message_field . $submit_field,
+                                'comment_field'       => $rating_field . $gallery_field . $message_field . $policy_field . $submit_field,
                                 'class_submit'        => 'hide',
                                 'cancel_reply_before' => ' &middot; <span>',
                                 'cancel_reply_after'  => '</span>',
@@ -158,7 +158,7 @@ if ( post_password_required() ) {
                                     'submit'        => $submit_field,
                                 );
                             } elseif ( $user_review ) {
-                                $args['comment_field'] = $message_field . $submit_field;
+                                $args['comment_field'] = $message_field . $policy_field . $submit_field;
                             }
                             ?>
 
