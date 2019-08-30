@@ -40,7 +40,7 @@ class Related_Listings extends Query {
 		return $this->send( [
 			'order' => 'ASC',
 			'offset' => $page * $per_page,
-			'orderby' => 'date',
+			'orderby' => 'meta_value',
 			'posts_per_page' => $per_page,
 			'meta_query' => $meta_query,
 			'output' => [ 'item-wrapper' => 'col-md-4 col-sm-6 col-xs-12' ],
