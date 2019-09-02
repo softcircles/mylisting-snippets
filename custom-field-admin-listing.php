@@ -3,7 +3,7 @@
 add_filter( 'manage_edit-job_listing_columns', function( $defaults ) {
     $defaults['custom_field'] = esc_html__( 'Custom Field', 'my-listing' );
     return $defaults;
-});
+}, 99);
 
 add_filter( 'manage_job_listing_posts_custom_column', function( $column ) {
     global $post;
@@ -23,7 +23,7 @@ add_filter( 'manage_job_listing_posts_custom_column', function( $column ) {
     }
 
     return $column;
-});
+}, 99 );
 add_filter( 'parse_query', function( $query ) {
 
     global $typenow;
@@ -36,4 +36,4 @@ add_filter( 'parse_query', function( $query ) {
     $query->query_vars['meta_value'] = $_GET['filter_by_custom_field'];
 
     return $query;
-});
+}, 99 );
