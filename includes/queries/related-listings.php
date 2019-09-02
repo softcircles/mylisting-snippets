@@ -31,19 +31,24 @@ class Related_Listings extends Query {
 		}
 
 		$meta_query[] = [
-			'key' => '_job_date',
-			'value' => date('Y-m-d'),
-            'compare' => '>=',
-            'type' => 'DATE',
+			'relation' => 'AND',
+			[
+				'key' => '_job_date',
+				'value' => date('Y-m-d'),
+	            'compare' => '>=',
+	            'type' => 'DATE',
+			]
 		];
 
 		return $this->send( [
-			'order' => 'ASC',
 			'offset' => $page * $per_page,
-			'orderby' => 'meta_value',
+			'meta_key'            => '_job_date',
+			'orderby'             => 'meta_value',
+			'order'               => 'ASC',
 			'posts_per_page' => $per_page,
 			'meta_query' => $meta_query,
 			'output' => [ 'item-wrapper' => 'col-md-4 col-sm-6 col-xs-12' ],
+			'mylisting_ignore_priority'	=> true,
 		] );
 	}
 }
