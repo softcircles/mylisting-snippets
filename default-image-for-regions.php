@@ -16,7 +16,6 @@ add_action( 'init', function() {
 
 			if ( ! $image ) {
 				update_term_meta( $term->get_id(), 'image', 3689 );
-				//printf( get_term_meta( $term->get_id() ) );
 			}
 		}
 } );
