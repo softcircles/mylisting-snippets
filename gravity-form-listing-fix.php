@@ -6,7 +6,7 @@
  *
  */
 
-if ( isset( $_REQUEST['job_manager_form'] )  && $_REQUEST['job_manager_form'] == 'submit-job' ) {
+if ( isset( $_REQUEST['job_manager_form'] )  && $_REQUEST['job_manager_form'] == 'submit-listing' ) {
 
     $unset_gform_fields = [
         'gform_ajax',
