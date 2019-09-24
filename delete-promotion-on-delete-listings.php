@@ -40,9 +40,7 @@ add_action( 'wp_trash_post', function( $listing_id ) {
 				continue;
 			}
 
-			if ( mylisting()->promotions()->expire_package( $promotion_id ) ) {
-          
-			}
+			mylisting()->promotions()->expire_package( $promotion_id );
 		}
 	}
 } );
