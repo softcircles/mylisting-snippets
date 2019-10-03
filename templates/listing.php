@@ -142,11 +142,9 @@ $GLOBALS['case27_custom_styles'] .= sprintf( ' body.single-listing .title-style-
                                 if ( $menu_item['page'] === 'related_listings' ) {
                                     $tab_options['type'] = ! empty( $menu_item['related_listing_type'] ) ? $menu_item['related_listing_type'] : '';
                                 }
-
-                                if ( $menu_item['page'] == 'comments' && is_user_logged_in() && $listing->get_author_id() == get_current_user_id() ) {
+                                    if ( $menu_item['page'] == 'comments' && !current_user_can( 'administrator' ) && $listing->get_author_id() == get_current_user_id() ) {
                                     continue;
-                                }
-
+                                    }
                                 ?><li>
                                     <a id="<?php echo esc_attr( 'listing_tab_'.$tab_id.'_toggle' ) ?>" data-section-id="<?php echo esc_attr( $tab_id ) ?>" class="listing-tab-toggle <?php echo esc_attr( "toggle-tab-type-{$menu_item['page']}" ) ?>" data-options="<?php echo c27()->encode_attr( (object) $tab_options ) ?>">
                                         <?php echo esc_html( $menu_item['label'] ) ?>
