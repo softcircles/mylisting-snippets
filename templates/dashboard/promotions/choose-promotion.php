@@ -51,7 +51,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 			                            		'my-listing'
 			                            	) ?>
 			                            </br>
-			                            	<?php echo $product->get_description() ?>
+			                            	<?php echo $product->get_short_description() ?>
 			                            </p>
 			                        </div>
 			                    </a>
