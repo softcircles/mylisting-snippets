@@ -50,9 +50,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 			                            		'Choose promotion modal - product description',
 			                            		'my-listing'
 			                            	) ?>
-			                            </br>
-			                            	<?php echo $product->get_short_description() ?>
 			                            </p>
+						    <a href="#" class="read-more-description"><?php esc_html_e( 'Read More', 'my-listing' ); ?></a>
+						    <p class="short-description" style="display: none;"><?php echo $product->get_short_description() ?></p>
 			                        </div>
 			                    </a>
 			                </li>
