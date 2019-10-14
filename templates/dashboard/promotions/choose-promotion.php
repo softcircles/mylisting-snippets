@@ -53,6 +53,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 			                            </p>
 						    <a href="#" class="read-more-description"><?php esc_html_e( 'Read More', 'my-listing' ); ?></a>
 						    <p class="short-description" style="display: none;"><?php echo $product->get_short_description() ?></p>
+						    <a href="#" class="hide-description" style="display: none; background-color: grey; padding: 3px; border-radius: 3px; margin-top: 5px;"><?php esc_html_e( 'Hide Description', 'my-listing' ); ?></a>
 			                        </div>
 			                    </a>
 			                </li>
