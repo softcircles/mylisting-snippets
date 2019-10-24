@@ -36,7 +36,7 @@ foreach ( (array) $layout['cover_details'] as $detail ) {
         }
         $detail['content'] .= $field_value;
     }
-    if ( ! is_array( $field_value ) ! empty( $field_value )) {
+    if ( ! is_array( $field_value ) ) {
         if ( empty( trim( $field_value ) ) && ! in_array( $field_value, [ 0, '0', 0.0 ], true ) ) {
             continue;
         }
