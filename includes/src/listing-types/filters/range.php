@@ -43,7 +43,7 @@ class Range extends Base_Filter {
 		$field_key = $this->get_prop( 'show_field' );
 		$range_type = $this->get_prop( 'option_type' );
 
-		if ( empty( $form_data[ $field_key ] ) || empty( $form_data[ $field_key.'_default' ] ) ) {
+		if ( empty( $form_data[ $field_key ] ) && empty( $form_data[ $field_key.'_default' ] ) ) {
 			return $args;
 		}
 
