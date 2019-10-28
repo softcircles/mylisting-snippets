@@ -46,14 +46,14 @@ class Add_Listing {
 		// retrieve and sanitize active listing and type ids if available
 		$listing_id = ! empty( $_REQUEST['job_id'] ) ? absint( $_REQUEST['job_id'] ) : false;
 		$listing_type = ! empty( $_REQUEST['listing_type'] ) ? $_REQUEST['listing_type'] : false;
-
+		// print_r($listing_id); exit('im in');
 		// if a listing id is available and valid, get the listing type instance from it (e.g. on prevew step handler)
 		if ( $listing_id && ( $listing = \MyListing\Src\Listing::get( $listing_id ) ) && $listing->type ) {
 			$type = $listing->type;
 			// mlog( 'Type ID retrieved from given listing: '.$listing->get_id() );
 
 		// if the lsiting id isn't available yet, e.g. in add listing form step handler, then retrieve the listing type from request
-		} elseif ( $listing_type && ( $listing_type_obj = \MyListing\Ext\Listing_Types\Listing_Type::get_by_name( $listing_type ) ) ) {
+		} elseif ( $listing_type && ( $listing_type_obj = \MyListing\Src\Listing_Type::get_by_name( $listing_type ) ) ) {
 			$type = $listing_type_obj;
 			// mlog( 'Type ID retrieved from request.' );
 
@@ -91,23 +91,21 @@ class Add_Listing {
 	 * @since 1.0
 	 */
 	public function choose_package() {
-		if ( empty( $_REQUEST['listing_type'] ) || ! ( $type = \MyListing\Ext\Listing_Types\Listing_Type::get_by_name( $_REQUEST['listing_type'] ) ) ) {
+		if ( empty( $_REQUEST['listing_type'] ) || ! ( $type = \MyListing\Src\Listing_Type::get_by_name( $_REQUEST['listing_type'] ) ) ) {
 			return;
 		}
 
 		$form = \MyListing\Src\Forms\Add_Listing_Form::instance();
+		// exit('im in choose package');
 		$tree = \MyListing\Src\Paid_Listings\Util::get_package_tree_for_listing_type( $type );
 
 		$listing_id = ! empty( $_GET['job_id'] ) ? absint( $_GET['job_id'] ) : $form->get_job_id();
 		?>
 		<section class="i-section c27-packages">
 			<div class="container">
-				<?php if ( mylisting_get_setting( 'submission_requires_account' ) && ! is_user_logged_in() ) : ?>
-					<div class="row section-title">
-						<h2 class="case27-primary-text"><?php _e( 'Choose a Package', 'my-listing' ) ?></h2>
-					</div>
-				<?php endif;?>
-
+				<div class="row section-title">
+					<h2 class="case27-primary-text"><?php _e( 'Choose a Package', 'my-listing' ) ?></h2>
+				</div>
 				<form method="post" id="job_package_selection">
 					<div class="job_listing_packages">
 
@@ -135,6 +133,7 @@ class Add_Listing {
 	 */
 	public function choose_package_handler() {
 		$form = \MyListing\Src\Forms\Add_Listing_Form::instance();
+		// print_r($form); exit('im in form handler');
 		try {
 			if ( empty( $_POST['listing_package'] ) || empty( $_REQUEST['listing_type'] ) ) {
 				throw new \Exception( _x( 'No package selected.', 'Listing submission', 'my-listing' ) );
@@ -244,8 +243,17 @@ class Add_Listing {
 		// clear cookie
 		wc_setcookie( 'chosen_package_id', '', time() - HOUR_IN_SECONDS );
 
+		// if the user has other items in their cart, redirect to cart page instead
+		// to avoid any accidental purchases
+		$redirect_url = WC()->cart->get_cart_contents_count() > 1
+			? wc_get_cart_url()
+			: wc_get_checkout_url();
+
 		// redirect to checkout page
-		wp_redirect( get_permalink( wc_get_page_id( 'checkout' ) ) );
+		// redirect to checkout page
+		// wp_redirect( get_permalink( wc_get_page_id( 'checkout' ) ) );
+		// exit;
+		wp_redirect( wc_get_checkout_url() );
 		exit;
 	}
 
