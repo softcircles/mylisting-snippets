@@ -19,6 +19,9 @@ if ( ! empty( $GLOBALS['wp_embed'] ) ) {
 	$content = $GLOBALS['wp_embed']->run_shortcode( $content );
 }
 $content = do_shortcode( $content );
+if ( empty( $content ) ) {
+	$content = 0;
+}
 ?>
 
 <div class="<?php echo esc_attr( $block->get_wrapper_classes() ) ?>" id="<?php echo esc_attr( $block->get_wrapper_id() ) ?>">
