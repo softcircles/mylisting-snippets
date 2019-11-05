@@ -19,16 +19,12 @@ $data = c27()->merge_options([
 global $post;
 $the_post = $post;
 
-$args = [];
-if ( is_singular( 'post' ) ) {
-	$args['post__not_in'] = $the_post->ID;
-}
-
 $templates = [
 	'col3' => ['wrap_in' => 'col-md-4 col-sm-6 col-xs-12'],
 	'col2' => ['wrap_in' => 'col-md-6 col-sm-6 col-xs-12'],
 ];
 
+$args = [];
 $args['paged'] = $data['paged'];
 $args['posts_per_page'] = $data['posts_per_page'];
 
@@ -37,6 +33,11 @@ if ($data['category']) $args['category__in'] = $data['category'];
 
 // Only display the selected listings.
 if ($data['include']) $args['post__in'] = $data['include'];
+
+if ( is_singular( 'post' ) ) {
+	$args['post__not_in'] = [$the_post->ID];
+	unset($args['post__in']);
+}
 
 // WP Query.
 $query = $data['query'] ? : new WP_Query($args);
