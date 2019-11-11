@@ -11,7 +11,7 @@ function ml_add_my_account_endpoint() {
  
 add_action( 'init', 'ml_add_my_account_endpoint' );
 
-function iconic_information_endpoint_content() {
+function ml_my_posts_endpoint_content() {
 
 	$query_args = [
 		'post_type' => 'post',
@@ -65,4 +65,4 @@ function iconic_information_endpoint_content() {
    	<?php
 }
 
-add_action( 'woocommerce_account_my-posts_endpoint', 'iconic_information_endpoint_content' );
+add_action( 'woocommerce_account_my-posts_endpoint', 'ml_my_posts_endpoint_content' );
