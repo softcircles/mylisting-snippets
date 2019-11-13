@@ -66,16 +66,29 @@ $categories = c27()->get_terms(get_the_ID(), 'category'); ?>
 	</div>
 </section>
 
-<section class="i-section blogpost-section" style="background:#fff;">
+<section id="post-<?php echo esc_attr( get_the_ID() ); ?>" <?php post_class('i-section'); ?> style="background:#fff;">
 	<div class="container">
-		<div class="row blog-title">
-			<div class="col-md-12">
-				<h1 class="case27-primary-text"><?php the_title() ?></h1>
-			</div>
-		</div>
 		<div class="row section-body">
-			<div class="col-md-12 c27-content-wrapper">
-				<?php the_content() ?>
+			<div class="col-md-3 page-sidebar sidebar-widgets">
+				<?php dynamic_sidebar('sidebar') ?>
+			</div>
+			<div class="col-md-9 page-content">
+				<div class="element">
+					<div class="pf-head">
+						<div class="title-style-1">
+							<h1><?php the_title() ?></h1>
+						</div>
+					</div>
+
+					<div class="pf-body c27-content-wrapper">
+						<?php the_content() ?>
+
+						<?php wp_link_pages( array(
+							'before' => '<div class="page-links">' . __( 'Pages:', 'my-listing' ),
+							'after' => '</div>',
+							)); ?>
+					</div>
+				</div>
 			</div>
 		</div>
 		<div class="row tags-list">
@@ -122,8 +135,6 @@ $categories = c27()->get_terms(get_the_ID(), 'category'); ?>
 				<?php next_post_link('%link', esc_html__('Next Post', 'my-listing')) ?>
 			</div>
 		</div>
-
-		<div><?php the_author(); ?></div>
 	</div>
 </section>
 
