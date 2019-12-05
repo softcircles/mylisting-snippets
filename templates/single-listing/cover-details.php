@@ -36,10 +36,9 @@ foreach ( (array) $layout['cover_details'] as $detail ) {
         }
         $detail['content'] .= $field_value;
     }
-    if ( ! is_array( $field_value ) ) {
-        if ( empty( trim( $field_value ) ) && ! in_array( $field_value, [ 0, '0', 0.0 ], true ) ) {
-            continue;
-        }
+
+    if ( empty( trim( $field_value ) ) && ! in_array( $field_value, [ 0, '0', 0.0 ], true ) ) {
+        continue;
     }
 
     if ( ! empty( $detail['suffix'] ) ) {
@@ -56,6 +55,15 @@ foreach ( (array) $layout['cover_details'] as $detail ) {
     <div class="listing-main-buttons <?php printf( 'detail-count-%d', count( (array) $layout['cover_actions'] ) + count( $details ) ) ?>">
         <ul>
             <?php foreach ( $details as $detail ): ?>
+                <?php if ( $listing->schedule->get_status() !== 'not-available' ): ?>
+                    <li class="price-or-date">
+                        <?php $open_now = $listing->get_schedule()->get_open_now(); ?>
+                        <div class="lf-head-btn open-status <?php echo sprintf( 'listing-status-%s', $open_now ? 'open' : 'closed' ) ?>">
+                            <span><?php echo $open_now ? __( 'Open', 'my-listing' ) : __( 'Closed', 'my-listing' ) ?></span>
+                        </div>
+                    </li>
+                <?php endif ?>
+
                 <li class="price-or-date">
                     <div class="lmb-label"><?php echo $detail['label'] ?></div>
                     <div class="value"><?php echo $detail['content'] ?></div>
