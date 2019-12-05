@@ -169,7 +169,7 @@ if ( ! $listing->get_data('geolocation_lat') || ! $listing->get_data('geolocatio
 				</div>
 			</div>
 		</div>
-		<?php if ( ! empty( $info_fields = $listing->get_info_fields() ) ): ?>
+		<?php if ( ! empty( $options['footer']['sections'] ) ): ?>
                <div class="grid-item">
 				<div class="element min-scroll">
 					<div class="pf-head">
@@ -179,14 +179,41 @@ if ( ! $listing->get_data('geolocation_lat') || ! $listing->get_data('geolocatio
 						</div>
 					</div>
 					<div class="pf-body">
-						<ul>
-                    		<?php foreach ( $info_fields as $info_field ): ?>
-                         		<li>
-                            		<i class="<?php echo esc_attr( $info_field['icon'] ) ?> sm-icon"></i>
-                            		<?php echo esc_html( $info_field['content'] ) ?>
-                        		</li>
-                    		<?php endforeach ?>
-                		</ul>
+                    		<?php foreach ((array) $options['footer']['sections'] as $section) : 
+                         		if ($section['type'] == 'details' && $section['details']) {
+						        $section_count++; ?>
+						        <div class="listing-details-3 c27-footer-section">
+						            <ul class="details-list">
+						                <?php foreach ((array) $section['details'] as $detail):
+						                    if ( ! isset( $detail['icon'] ) ) {
+						                        $detail['icon'] = '';
+						                    }
+
+						                    if ( ! $listing->has_field( $detail['show_field'] ) ) {
+						                        continue;
+						                    }
+
+						                    $detail_val = $listing->get_field( $detail['show_field'] );
+						                    // Escape square brackets so any shortcode added by the listing owner won't be run.
+						                    $detail_val = str_replace( [ "[" , "]" ] , [ "&#91;" , "&#93;" ] , $detail_val );
+						                    $detail_val = apply_filters( 'case27\listing\preview\detail\\' . $detail['show_field'], $detail_val, $detail, $listing );
+
+						                    if ( is_array( $detail_val ) ) {
+						                        $detail_val = join( ', ', $detail_val );
+						                    }
+
+						                    $GLOBALS['c27_active_shortcode_content'] = $detail_val; ?>
+						                    <li>
+						                        <?php if ( ! empty( $detail['icon'] ) ): ?>
+						                            <i class="<?php echo esc_attr( $detail['icon'] ) ?>"></i>
+						                        <?php endif ?>
+						                        <span><?php echo str_replace( '[[field]]', $detail_val, do_shortcode( $detail['label'] ) ) ?></span>
+						                    </li>
+						                <?php endforeach ?>
+						            </ul>
+						        </div>
+						    <?php } ?>
+                    	<?php endforeach ?>
 					</div>
 				</div>
 			</div>
