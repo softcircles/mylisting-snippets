@@ -11,9 +11,11 @@ if ( $field['type'] !== 'term-select' ) {
 	return require locate_template( 'templates/add-listing/form-fields/term-select-field.php' );
 }
 
+$orderby = ( $field['taxonomy'] == 'YOUR-TAXONOMY-SLUG' ) ? 'YOUR_CUSTOM_ORDER' : 'name';
+
 $terms = \MyListing\Src\Endpoints\Term_List_Endpoint::instance()->get_terms( [
 	'taxonomy' => $field['taxonomy'],
-	'orderby'    => apply_filters( 'custom_taxonomy_order_by', 'name' ),
+	'orderby'    => $orderby,
 	'order'      => 'ASC',
 	'hide_empty' => false,
 	'listing_type' => $type_id,
