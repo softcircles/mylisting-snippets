@@ -1,5 +1,4 @@
 <?php
-
 $data = c27()->merge_options([
 	'logo'                    => c27()->get_site_logo(),
     'skin'                    => c27()->get_setting('header_skin', 'dark'),
@@ -18,14 +17,6 @@ $data = c27()->merge_options([
 	'blend_to_next_section'   => false,
     'is_edit_mode'            => false,
 ], $data);
-
-$logo_obj = c27()->get_setting('general_site_logo');
-
-$alt_text = 'Logo';
-
-if ( $logo_obj['alt'] ) {
-	$alt_text = $logo_obj['alt'];
-}
 
 $header_classes = ['c27-main-header', 'header', "header-style-{$data['style']}", "header-{$data['skin']}-skin", "header-scroll-{$data['scroll_skin']}-skin", 'hide-until-load', 'header-scroll-hide'];
 
@@ -83,7 +74,7 @@ if ($data['scroll_border_color']) {
 					<?php endif ?>
 
 					<a href="<?php echo esc_url( home_url('/') ) ?>" class="static-logo">
-						<img src="<?php echo esc_url( $data['logo'] ) ?>" alt="<?php echo esc_attr( $alt_text ); ?>">
+						<img src="<?php echo esc_url( $data['logo'] ) ?>">
 					</a>
 				<?php else: ?>
 					<a href="<?php echo esc_url( home_url('/') ) ?>" class="header-logo-text">
@@ -100,7 +91,7 @@ if ($data['scroll_border_color']) {
 								<div class="avatar">
 									<?php echo get_avatar( $current_user->ID ) ?>
 								</div>
-								<?php echo esc_attr( $current_user->display_name ) ?>
+								<?php esc_html_e( 'My Account', 'my-listing' ); ?>
 								<?php if ( class_exists('WooCommerce') ): ?>
 									<div class="submenu-toggle"><i class="material-icons">arrow_drop_down</i></div>
 								<?php endif; ?>
@@ -133,7 +124,7 @@ if ($data['scroll_border_color']) {
 
 						<?php if ( c27()->get_setting( 'messages_enabled', true ) !== false ): ?>
 							<div class="messaging-center inbox-header-icon">
-								<a href="#" id="icon-btn" class="icon-btn" data-toggle="modal" data-target="#ml-messages-modal">
+								<a href="#" id="messages-modal-toggle" class="icon-btn" data-toggle="modal" data-target="#ml-messages-modal">
 									<i class="material-icons">inbox</i>
 									<div class="chat-counter-container" id="ml-chat-activities"></div>
 								</a>
