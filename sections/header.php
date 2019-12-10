@@ -202,7 +202,7 @@ if ($data['scroll_border_color']) {
 									<div class="avatar">
 										<?php echo get_avatar( $current_user->ID ) ?>
 									</div>
-									<?php echo esc_attr( $current_user->display_name ) ?>
+									<?php esc_html_e( 'My Account', 'my-listing' ); ?>
 									<?php if ( class_exists('WooCommerce') ): ?>
 										<div class="submenu-toggle"><i class="mi arrow_drop_down"></i></div>
 									<?php endif; ?>
