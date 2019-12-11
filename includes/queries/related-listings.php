@@ -5,50 +5,39 @@ namespace MyListing\Src\Queries;
 class Related_Listings extends Query {
 	use \MyListing\Src\Traits\Instantiatable;
 
-	public $action = 'get_related_listings_by_id';
+	public function __construct() {
+		add_action( 'mylisting_ajax_get_related_listings', [ $this, 'handle' ] );
+		add_action( 'mylisting_ajax_nopriv_get_related_listings', [ $this, 'handle' ] );
+	}
 
 	public function handle() {
-		check_ajax_referer( 'c27_ajax_nonce', 'security' );
-
-		if ( empty( $_POST['listing_id'] ) ) {
-			return false;
+		if ( empty( $_GET['listing_id'] ) || empty( $_GET['field_key'] ) ) {
+			return;
 		}
 
-		$page       = absint( isset($_POST['page']) ? $_POST['page'] : 0 );
-		$per_page   = 9;
-
-		$meta_query = [];
-		$meta_query[] = [
-			'key' => '_related_listing',
-			'value' => absint( $_POST['listing_id'] ),
-		];
-
-		if ( ! empty( $_POST['listing_type'] ) ) {
-			$meta_query[] = [
-				'key' => '_case27_listing_type',
-				'value' => sanitize_text_field( $_POST['listing_type'] ),
-			];
+		$listing = \MyListing\Src\Listing::get( $_GET['listing_id'] );
+		if ( ! $listing ) {
+			return;
 		}
 
-		$meta_query[] = [
-			'relation' => 'AND',
-			[
-				'key' => '_job_date',
-				'value' => date('Y-m-d'),
-	            'compare' => '>=',
-	            'type' => 'DATE',
-			]
-		];
+		$field = $listing->get_field_object( sanitize_text_field( $_GET['field_key'] ) );
+		if ( ! ( $field && $field->get_type() === 'related-listing' ) ) {
+			return;
+		}
+
+		$page = absint( isset( $_GET['page'] ) ? $_GET['page'] : 0 );
+		$per_page = 100;
+		$related_items = (array) $field->get_related_items();
 
 		return $this->send( [
-			'offset' => $page * $per_page,
-			'meta_key'            => '_job_date',
-			'orderby'             => 'meta_value',
-			'order'               => 'ASC',
+			'post__in' => ! empty( $related_items ) ? $related_items : [0],
+			'post_status' => 'publish',
 			'posts_per_page' => $per_page,
-			'meta_query' => $meta_query,
+			'offset' => $page * $per_page,
+			'orderby' => 'post__in',
+			'order' => 'DESC',
 			'output' => [ 'item-wrapper' => 'col-md-4 col-sm-6 col-xs-12' ],
-			'mylisting_ignore_priority'	=> true,
+			'fields' => 'ids',
 		] );
 	}
 }
