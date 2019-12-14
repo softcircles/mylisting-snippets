@@ -109,6 +109,9 @@ $endpoint = wc_get_account_endpoint_url( 'my-listings' );
 		</div>
 	<?php else : ?>
 		<table class="job-manager-jobs">
+			<div id="promote_dilog" style="display: none" align = "center">
+			    <h5>You can promote your listing once it is approved</h5>
+			</div>
 			<tbody>
 			<?php foreach ( $listings as $listing ): ?>
 				<tr>
@@ -148,10 +151,20 @@ $endpoint = wc_get_account_endpoint_url( 'my-listings' );
 									<?php endif ?>
 								<?php endif ?>
 							<?php endif ?>
+							<?php if ( $listing->get_status() === 'pending' ): ?>
+								<li class="cts-listing-action-preview">
+									<a class="preview"	 href="<?php echo $listing->get_link(); ?>">
+										<?php _ex( 'Preview', 'User dashboard', 'my-listing' ) ?>
+									</a>
+								</li>
+							<?php endif; ?>
 
 							<?php do_action( 'mylisting/user-listings/actions', $listing ) ?>
 							<?php /* @deprecated */ do_action( 'mylisting/dashboard/listing-actions', $listing ) ?>
 						</ul>
+						<div id="promote_dilog" style="display: none" align = "center">
+						    <p>Your listing will be promoted once approved.</p>
+						</div>
 					</td>
 					<td class="listing-info">
 						<?php if ( $package = $listing->get_product() ): ?>
