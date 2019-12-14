@@ -162,9 +162,6 @@ $endpoint = wc_get_account_endpoint_url( 'my-listings' );
 							<?php do_action( 'mylisting/user-listings/actions', $listing ) ?>
 							<?php /* @deprecated */ do_action( 'mylisting/dashboard/listing-actions', $listing ) ?>
 						</ul>
-						<div id="promote_dilog" style="display: none" align = "center">
-						    <p>Your listing will be promoted once approved.</p>
-						</div>
 					</td>
 					<td class="listing-info">
 						<?php if ( $package = $listing->get_product() ): ?>
