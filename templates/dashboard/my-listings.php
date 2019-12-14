@@ -151,7 +151,7 @@ $endpoint = wc_get_account_endpoint_url( 'my-listings' );
 									<?php endif ?>
 								<?php endif ?>
 							<?php endif ?>
-							<?php if ( $listing->get_status() === 'pending' ): ?>
+							<?php if ( $listing->get_status() === 'pending' || $listing->get_status() === 'pending_payment'  ): ?>
 								<li class="cts-listing-action-preview">
 									<a class="preview"	 href="<?php echo $listing->get_link(); ?>">
 										<?php _ex( 'Preview', 'User dashboard', 'my-listing' ) ?>
