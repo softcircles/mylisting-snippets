@@ -367,7 +367,7 @@ class WooCommerce {
 	 */
 	public function display_promote_listing_action( $listing ) {
 
-		if ( $listing->get_status() == 'pending' ) {
+		if ( $listing->get_status() == 'pending' || $listing->get_status() == 'pending_payment' ) {
 			return printf(
 			'<li class="cts-listing-action-promote" >
 				<a
