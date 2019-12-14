@@ -109,9 +109,6 @@ $endpoint = wc_get_account_endpoint_url( 'my-listings' );
 		</div>
 	<?php else : ?>
 		<table class="job-manager-jobs">
-			<div id="promote_dilog" style="display: none" align = "center">
-			    <h5>You can promote your listing once it is approved</h5>
-			</div>
 			<tbody>
 			<?php foreach ( $listings as $listing ): ?>
 				<tr>
