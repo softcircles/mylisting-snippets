@@ -1,5 +1,5 @@
 <div class="lf-item <?php echo esc_attr( 'lf-item-'.$options['template'] ) ?>" data-template="default">
-    <a href="<?php echo esc_url( $listing->get_link() ) ?>">
+    <a href="<?php echo esc_url( $listing->get_link() ) ?>" target="_blank">
 
         <?php
         /**
@@ -11,7 +11,7 @@
 
         <?php if ($options['background']['type'] == 'gallery' && ( $gallery = $listing->get_field( 'gallery' ) ) ): ?>
             <div class="owl-carousel lf-background-carousel">
-                <?php foreach ( array_slice( $gallery, 0, 7 ) as $gallery_image ): ?>
+                <?php foreach ( array_slice( $gallery, 0, 3 ) as $gallery_image ): ?>
                     <div class="item">
                         <div class="lf-background" style="background-image: url('<?php echo esc_url( c27()->get_resized_image( $gallery_image, 'medium_large' ) ) ?>');"></div>
                     </div>
