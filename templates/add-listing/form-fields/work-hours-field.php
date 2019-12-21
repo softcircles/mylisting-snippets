@@ -6,9 +6,9 @@ $weekdays_short = [
 
 $daystatuses = [
 	'enter-hours' => __( 'Enter hours', 'my-listing' ),
-	'open-all-day' => __( 'Open all day', 'my-listing' ),
+	//'open-all-day' => __( 'Open all day', 'my-listing' ),
 	'closed-all-day' => __( 'Closed all day', 'my-listing' ),
-	'by-appointment-only' => __( 'By appointment only', 'my-listing' ),
+	//'by-appointment-only' => __( 'By appointment only', 'my-listing' ),
 ];
 
 $schedule = new MyListing\Src\Work_Hours( ! empty( $field['value'] ) ? (array) $field['value'] : [] );
@@ -90,32 +90,17 @@ $schedule = new MyListing\Src\Work_Hours( ! empty( $field['value'] ) ? (array) $
 
 <div class="form-group">
 	<?php
-		$timezones = timezone_identifiers_list();
-		$default_timezone = date_default_timezone_get();
-		$wp_timezone = get_option('timezone_string');
-		$listing_timezone = isset($field['value']) && isset($field['value']['timezone']) && in_array( $field['value']['timezone'], $timezones ) ? $field['value']['timezone'] : false;
-		$current_timezone = ( $listing_timezone ?: ( $wp_timezone ?: $default_timezone ) );
-		$current_offset = get_option('gmt_offset');
-		$tzstring = get_option('timezone_string');
-		$check_zone_info = true;
-		// Remove old Etc mappings. Fallback to gmt_offset.
-		if ( false !== strpos($tzstring,'Etc/GMT') )
-			$tzstring = '';
-		if ( empty($tzstring) ) { // Create a UTC+- zone if no timezone string exists
-			$check_zone_info = false;
-			if ( 0 == $current_offset )
-				$tzstring = 'UTC+0';
-			elseif ($current_offset < 0)
-				$tzstring = 'UTC' . $current_offset;
-			else
-				$tzstring = 'UTC+' . $current_offset;
-		}
-		?>
-		<label><?php _e( 'Timezone', 'my-listing' ) ?></label>
-		<select name="<?php echo esc_attr( (isset($field['name']) ? $field['name'] : $key) . "[timezone]" ); ?>" placeholder="<?php esc_attr_e( 'Timezone', 'my-listing' ) ?>" class="custom-select">
-			<?php echo wp_timezone_choice( $tzstring, get_user_locale() ); ?>
-			<!-- <?php //foreach ($timezones as $timezone): ?>
-				<option value="<?php //echo esc_attr( $timezone ) ?>" <?php //echo $timezone == $current_timezone ? 'selected="selected"' : '' ?>><?php echo esc_html( $timezone ) ?></option>
-			<?php //endforeach ?> -->
-		</select>
+	$timezones = timezone_identifiers_list();
+	$default_timezone = date_default_timezone_get();
+	$wp_timezone = get_option('timezone_string');
+	$listing_timezone = isset($field['value']) && isset($field['value']['timezone']) && in_array( $field['value']['timezone'], $timezones ) ? $field['value']['timezone'] : false;
+
+	$current_timezone = ( $listing_timezone ?: ( $wp_timezone ?: $default_timezone ) );
+	?>
+	<label><?php _e( 'Timezone', 'my-listing' ) ?></label>
+	<select name="<?php echo esc_attr( (isset($field['name']) ? $field['name'] : $key) . "[timezone]" ); ?>" placeholder="<?php esc_attr_e( 'Timezone', 'my-listing' ) ?>" class="custom-select">
+		<?php foreach ($timezones as $timezone): ?>
+			<option value="<?php echo esc_attr( $timezone ) ?>" <?php echo $timezone == $current_timezone ? 'selected="selected"' : '' ?>><?php echo esc_html( $timezone ) ?></option>
+		<?php endforeach ?>
+	</select>
 </div>
