@@ -4,18 +4,15 @@ global $post;
 
 $listing = MyListing\Src\Listing::get( $post );
 
-if ( ! $listing->type() ) {
+if ( ! $listing->type ) {
     return;
 }
 
 // Get the layout blocks for the single listing page.
 $layout = $listing->type->get_layout();
-$fields = $listing->type->get_fields();
 $tagline = $listing->get_field( 'tagline' );
 
-$listing_logo = $listing->get_logo( 'medium' );
-
-$GLOBALS['case27_custom_styles'] .= sprintf( ' body.single-listing .title-style-1 i { color: %s; } ', c27()->get_setting( 'single_listing_content_block_icon_color', '#c7cdcf' ) );
+$listing_logo = $listing->get_cover_image( 'medium' );
 ?>
 
 <!-- SINGLE LISTING PAGE -->
@@ -42,7 +39,7 @@ $GLOBALS['case27_custom_styles'] .= sprintf( ' body.single-listing .title-style-
                     <?php if ( $listing_logo ): ?>
                         <a
                             class="profile-avatar open-photo-swipe"
-                            href="<?php echo esc_url( $listing->get_logo( 'full' ) ) ?>"
+                            href="<?php echo esc_url( $listing->get_cover_image( 'full' ) ) ?>"
                             style="background-image: url('<?php echo esc_url( $listing_logo ) ?>')"
                         ></a>
                     <?php endif ?>
@@ -140,11 +137,9 @@ $GLOBALS['case27_custom_styles'] .= sprintf( ' body.single-listing .title-style-
 
                                 // Related listings tab options.
                                 if ( $menu_item['page'] === 'related_listings' ) {
-                                    $tab_options['type'] = ! empty( $menu_item['related_listing_type'] ) ? $menu_item['related_listing_type'] : '';
+                                    $tab_options['field_key'] = ! empty( $menu_item['related_listing_field'] ) ? $menu_item['related_listing_field'] : '';
                                 }
-                                    if ( $menu_item['page'] == 'comments' && !current_user_can( 'administrator' ) && $listing->get_author_id() == get_current_user_id() ) {
-                                    continue;
-                                    }
+
                                 ?><li>
                                     <a id="<?php echo esc_attr( 'listing_tab_'.$tab_id.'_toggle' ) ?>" data-section-id="<?php echo esc_attr( $tab_id ) ?>" class="listing-tab-toggle <?php echo esc_attr( "toggle-tab-type-{$menu_item['page']}" ) ?>" data-options="<?php echo c27()->encode_attr( (object) $tab_options ) ?>">
                                         <?php echo esc_html( $menu_item['label'] ) ?>
@@ -277,6 +272,8 @@ $GLOBALS['case27_custom_styles'] .= sprintf( ' body.single-listing .title-style-
                                     $block['icon'] = sprintf( 'mi %s', $block['icon'] );
                                 }
 
+                                $block->add_wrapper_classes( $columns['block-class'] );
+
                                 $block_wrapper_class = $columns['block-class'];
                                 $block_wrapper_class .= ' block-type-' . esc_attr( $block['type'] );
 
@@ -289,414 +286,24 @@ $GLOBALS['case27_custom_styles'] .= sprintf( ' body.single-listing .title-style-
                                 }
 
                                 // Get the block value if available.
-                                if ( ! empty( $block['show_field'] ) && $listing->has_field( $block['show_field'] ) ) {
-                                    $field_obj = $listing->get_field( $block['show_field'], true );
-                                    // Get the field options if available.
-                                    $field = $field_obj->options;
-                                    $block_content = $field_obj->value;
+                                if ( ! empty( $block['show_field'] ) && $listing->has_field( $block['show_field'] ) && ( $field = $listing->get_field( $block['show_field'], true ) ) ) {
+                                    $block_content = $field->get_value();
                                 } else {
                                     $block_content = false;
                                     $field = false;
                                 }
 
-                                // Text Block.
-                                if ( $block['type'] == 'text' && $block_content ) {
-                                    $escape_html = true;
-                                    $allow_shortcodes = false;
-                                    if ( $field ) {
-                                        if ( ! empty( $field['type'] ) && in_array( $field['type'], [ 'texteditor', 'wp-editor' ] ) ) {
-                                            $escape_html = empty( $field['editor-type'] ) || $field['editor-type'] == 'textarea';
+                                // content block location path
+                                $template_base = 'templates/single-listing/content-blocks/%s-block.php';
 
-                                            if ( $field['type'] == 'wp-editor' ) {
-                                                $escape_html = false;
-                                            }
+                                // first check if there's a template with the block type in it's name
+                                if ( $template = locate_template( sprintf( $template_base, $block->get_type() ) ) ) {
+                                    require $template;
 
-                                            $allow_shortcodes = ! empty( $field['allow-shortcodes'] ) && $field['allow-shortcodes'] && ! $escape_html;
-                                        }
-                                    }
-
-                                    c27()->get_section( 'content-block', [
-                                        'ref' => 'single-listing',
-                                        'icon' => ! empty( $block['icon'] ) ? $block['icon'] : 'mi view_headline',
-                                        'title' => $block['title'],
-                                        'content' => $block_content,
-                                        'wrapper_class' => $block_wrapper_class,
-                                        'wrapper_id' => $block['id'],
-                                        'escape_html' => $escape_html,
-                                        'allow-shortcodes' => $allow_shortcodes,
-                                    ] );
+                                // some block's type contains underscores; to keep consistency in file naming, support hyphenated versions too
+                                } elseif ( $template = locate_template( sprintf( $template_base, str_replace( '_', '-', $block->get_type() ) ) ) ) {
+                                    require $template;
                                 }
-
-                                // Gallery Block.
-                                if ( $block['type'] == 'gallery' && ( $gallery_items = (array) $listing->get_field( $block['show_field'] ) ) ) {
-                                    $gallery_type = 'carousel';
-                                    foreach ((array) $block['options'] as $option) {
-                                        if ($option['name'] == 'gallery_type') $gallery_type = $option['value'];
-                                    }
-
-                                    if ( array_filter( $gallery_items ) ) {
-                                        c27()->get_section('gallery-block', [
-                                            'ref' => 'single-listing',
-                                            'icon' => ! empty( $block['icon'] ) ? $block['icon'] : 'mi insert_photo',
-                                            'title' => $block['title'],
-                                            'gallery_type' => $gallery_type,
-                                            'wrapper_class' => $block_wrapper_class,
-                                            'wrapper_id' => $block['id'],
-                                            'gallery_items' => array_filter( $gallery_items ),
-                                            'gallery_item_interface' => 'CASE27_JOB_MANAGER_ARRAY',
-                                            ]);
-                                    }
-                                }
-
-                                // Files Block.
-                                if ( $block['type'] == 'file' && ( $files = (array) $listing->get_field( $block['show_field'] ) ) ) {
-                                    if ( array_filter( $files ) ) {
-                                        c27()->get_section('files-block', [
-                                            'ref' => 'single-listing',
-                                            'icon' => ! empty( $block['icon'] ) ? $block['icon'] : 'mi attach_file',
-                                            'title' => $block['title'],
-                                            'wrapper_class' => $block_wrapper_class,
-                                            'wrapper_id' => $block['id'],
-                                            'items' => array_filter( $files ),
-                                            ]);
-                                    }
-                                }
-
-                                // Categories Block.
-                                if ( $block['type'] == 'categories' && ( $terms = $listing->get_field( 'job_category' ) ) ) {
-                                    c27()->get_section('listing-categories-block', [
-                                        'ref' => 'single-listing',
-                                        'icon' => ! empty( $block['icon'] ) ? $block['icon'] : 'mi view_module',
-                                        'title' => $block['title'],
-                                        'terms' => $terms,
-                                        'wrapper_class' => $block_wrapper_class,
-                                        'wrapper_id' => $block['id'],
-                                        ]);
-                                }
-
-                                // Tags Block.
-                                if ( $block['type'] == 'tags' && ( $terms = $listing->get_field( 'job_tags' ) ) ) {
-                                    c27()->get_section('list-block', [
-                                        'ref' => 'single-listing',
-                                        'icon' => ! empty( $block['icon'] ) ? $block['icon'] : 'mi view_module',
-                                        'title' => $block['title'],
-                                        'items' => $terms,
-                                        'item_interface' => 'WP_TERM',
-                                        'wrapper_class' => $block_wrapper_class,
-                                        'wrapper_id' => $block['id'],
-                                        ]);
-                                }
-
-                                if ( $block['type'] == 'terms' ) {
-                                    // Keys = taxonomy name
-                                    // Value = taxonomy field name
-                                    $taxonomies = array_merge( [
-                                        'job_listing_category' => 'job_category',
-                                        'case27_job_listing_tags' => 'job_tags',
-                                        'region' => 'region',
-                                    ], mylisting_custom_taxonomies( 'slug', 'slug' ) );
-
-                                    $taxonomy = 'job_listing_category';
-                                    $template = 'listing-categories-block';
-
-                                    if ( isset( $block['options'] ) ) {
-                                        foreach ((array) $block['options'] as $option) {
-                                            if ($option['name'] == 'taxonomy') $taxonomy = $option['value'];
-                                            if ($option['name'] == 'style') $template = $option['value'];
-                                        }
-                                    }
-
-                                    if ( ! isset( $taxonomies[ $taxonomy ] ) ) {
-                                        continue;
-                                    }
-
-                                    if ( $terms = $listing->get_field( $taxonomies[ $taxonomy ] ) ) {
-                                        if ( $template == 'list-block' ) {
-                                            c27()->get_section('list-block', [
-                                                'ref' => 'single-listing',
-                                                'icon' => ! empty( $block['icon'] ) ? $block['icon'] : 'mi view_module',
-                                                'title' => $block['title'],
-                                                'items' => $terms,
-                                                'item_interface' => 'WP_TERM',
-                                                'wrapper_class' => $block_wrapper_class,
-                                                'wrapper_id' => $block['id'],
-                                            ]);
-                                        } else {
-                                            c27()->get_section('listing-categories-block', [
-                                                'ref' => 'single-listing',
-                                                'icon' => ! empty( $block['icon'] ) ? $block['icon'] : 'mi view_module',
-                                                'title' => $block['title'],
-                                                'terms' => $terms,
-                                                'wrapper_class' => $block_wrapper_class,
-                                                'wrapper_id' => $block['id'],
-                                            ]);
-                                        }
-                                    }
-                                }
-
-                                // Location Block.
-                                if ( $block['type'] == 'location' && isset( $block['show_field'] ) && ( $block_location = $listing->get_field( $block['show_field'] ) ) ) {
-                                    if ( ! ( $listing_logo = $listing->get_logo( 'thumbnail' ) ) ) {
-                                        $listing_logo = c27()->image( 'marker.jpg' );
-                                    }
-
-                                    $location_arr = [
-                                        'address' => $block_location,
-                                        'marker_image' => ['url' => $listing_logo],
-                                    ];
-
-                                    if ( $block['show_field'] == 'job_location' && ( $lat = $listing->get_data('geolocation_lat') ) && ( $lng = $listing->get_data('geolocation_long') ) ) {
-                                        $location_arr = [
-                                            'marker_lat' => $lat,
-                                            'marker_lng' => $lng,
-                                            'marker_image' => ['url' => $listing_logo],
-                                        ];
-                                    }
-
-                                    $map_skin = 'skin1';
-                                    if ( ! empty( $block['options'] ) ) {
-                                        foreach ((array) $block['options'] as $option) {
-                                            if ($option['name'] == 'map_skin') $map_skin = $option['value'];
-                                        }
-                                    }
-
-                                    c27()->get_section('map', [
-                                        'ref' => 'single-listing',
-                                        'icon' => ! empty( $block['icon'] ) ? $block['icon'] : 'mi map',
-                                        'title' => $block['title'],
-                                        'wrapper_class' => $block_wrapper_class,
-                                        'wrapper_id' => $block['id'],
-                                        'template' => 'block',
-                                        'options' => [
-                                            'locations' => [ $location_arr ],
-                                            'zoom' => 11,
-                                            'draggable' => true,
-                                            'skin' => $map_skin,
-                                        ],
-                                    ]);
-                                }
-
-                                // Contact Form Block.
-                                if ($block['type'] == 'contact_form') {
-                                    $contact_form_id = false;
-                                    $email_to = ['job_email'];
-                                    foreach ((array) $block['options'] as $option) {
-                                        if ($option['name'] == 'contact_form_id') $contact_form_id = absint( $option['value'] );
-                                        if ($option['name'] == 'email_to') $email_to = $option['value'];
-                                    }
-
-                                    $email_to = array_filter( $email_to );
-                                    $recipients = [];
-                                    foreach ( $email_to as $email_field ) {
-                                        if ( ( $email = $listing->get_field( $email_field ) ) && is_email( $email ) ) {
-                                            $recipients[] = $email;
-                                        }
-                                    }
-
-                                    if ( $contact_form_id && count( $email_to ) && count( $recipients ) ) {
-                                        c27()->get_section('raw-block', [
-                                            'ref' => 'single-listing',
-                                            'icon' => ! empty( $block['icon'] ) ? $block['icon'] : 'mi email',
-                                            'title' => $block['title'],
-                                            'content' => str_replace('%case27_recipients%', join('|', $email_to), do_shortcode( sprintf( '[contact-form-7 id="%d"]', $contact_form_id ) ) ),
-                                            'wrapper_class' => $block_wrapper_class,
-                                            'wrapper_id' => $block['id'],
-                                            'escape_html' => false,
-                                        ]);
-                                    }
-                                }
-
-                                // Host Block.
-                                if ($block['type'] == 'related_listing' && ( $related_listing = $listing->get_field( 'related_listing' ) ) ) {
-                                    c27()->get_section('related-listing-block', [
-                                        'ref' => 'single-listing',
-                                        'icon' => ! empty( $block['icon'] ) ? $block['icon'] : 'mi layers',
-                                        'title' => $block['title'],
-                                        'related_listing' => $related_listing,
-                                        'wrapper_class' => $block_wrapper_class,
-                                        'wrapper_id' => $block['id'],
-                                    ]);
-                                }
-
-                                // Countdown Block.
-                                if ($block['type'] == 'countdown' && ( $countdown_date = $listing->get_field( $block['show_field'] ) ) ) {
-                                    c27()->get_section('countdown-block', [
-                                        'ref' => 'single-listing',
-                                        'icon' => ! empty( $block['icon'] ) ? $block['icon'] : 'mi av_timer',
-                                        'title' => $block['title'],
-                                        'countdown_date' => $countdown_date,
-                                        'wrapper_class' => $block_wrapper_class,
-                                        'wrapper_id' => $block['id'],
-                                    ]);
-                                }
-
-                                // Video Block.
-                                if ($block['type'] == 'video' && ( $video_url = $listing->get_field( $block['show_field'] ) ) ) {
-                                    c27()->get_section('video-block', [
-                                        'ref' => 'single-listing',
-                                        'icon' => ! empty( $block['icon'] ) ? $block['icon'] : 'mi videocam',
-                                        'title' => $block['title'],
-                                        'video_url' => $video_url,
-                                        'wrapper_class' => $block_wrapper_class,
-                                        'wrapper_id' => $block['id'],
-                                    ]);
-                                }
-
-                                if ( in_array( $block['type'], [ 'table', 'accordion', 'tabs', 'details' ] ) ) {
-                                    $rows = [];
-
-                                    foreach ((array) $block['options'] as $option) {
-                                        if ($option['name'] == 'rows') {
-                                            foreach ((array) $option['value'] as $row) {
-                                                if ( ! is_array( $row ) || empty( $row['show_field'] ) || ! $listing->has_field( $row['show_field'] ) ) {
-                                                    continue;
-                                                }
-
-                                                $row_field = $listing->get_field( $row['show_field'] );
-                                                if ( is_array( $row_field ) ) {
-                                                    $row_field = join( ', ', $row_field );
-                                                }
-
-                                                $rows[] = [
-                                                    'title' => $row['label'],
-                                                    'content' => $listing->compile_field_string( $row['content'], $row_field ),
-                                                    'icon' => isset( $row['icon'] ) ? $row['icon'] : '',
-                                                ];
-                                            }
-                                        }
-                                    }
-                                }
-
-                                // Table Block.
-                                if ( $block['type'] == 'table' && count( $rows ) ) {
-                                    c27()->get_section('table-block', [
-                                        'ref' => 'single-listing',
-                                        'icon' => ! empty( $block['icon'] ) ? $block['icon'] : 'mi view_module',
-                                        'title' => $block['title'],
-                                        'rows' => $rows,
-                                        'wrapper_class' => $block_wrapper_class,
-                                        'wrapper_id' => $block['id'],
-                                        ]);
-                                }
-
-                                // Details Block.
-                                if ( $block['type'] == 'details' && count( $rows ) ) {
-                                    c27()->get_section('list-block', [
-                                        'ref' => 'single-listing',
-                                        'icon' => ! empty( $block['icon'] ) ? $block['icon'] : 'mi view_module',
-                                        'title' => $block['title'],
-                                        'item_interface' => 'CASE27_DETAILS_ARRAY',
-                                        'items' => $rows,
-                                        'wrapper_class' => $block_wrapper_class,
-                                        'wrapper_id' => $block['id'],
-                                        ]);
-                                }
-
-                                // Accordion Block.
-                                if ( $block['type'] == 'accordion' && count( $rows ) ) {
-                                    c27()->get_section('accordion-block', [
-                                        'ref' => 'single-listing',
-                                        'icon' => ! empty( $block['icon'] ) ? $block['icon'] : 'mi view_module',
-                                        'title' => $block['title'],
-                                        'rows' => $rows,
-                                        'wrapper_class' => $block_wrapper_class,
-                                        'wrapper_id' => $block['id'],
-                                        ]);
-                                }
-
-                                // Tabs Block.
-                                if ( $block['type'] == 'tabs' && count( $rows ) ) {
-                                    c27()->get_section('tabs-block', [
-                                        'ref' => 'single-listing',
-                                        'icon' => ! empty( $block['icon'] ) ? $block['icon'] : 'mi view_module',
-                                        'title' => $block['title'],
-                                        'rows' => $rows,
-                                        'wrapper_class' => $block_wrapper_class,
-                                        'wrapper_id' => $block['id'],
-                                        ]);
-                                }
-
-                                // Work Hours Block.
-                                if ($block['type'] == 'work_hours' && ( $work_hours = $listing->get_field( 'work_hours' ) ) ) {
-                                    c27()->get_section('work-hours-block', [
-                                        'wrapper_class' => $block_wrapper_class . ' open-now sl-zindex',
-                                        'wrapper_id' => $block['id'],
-                                        'ref' => 'single-listing',
-                                        'title' => $block['title'],
-                                        'icon' => ! empty( $block['icon'] ) ? $block['icon'] : 'mi alarm',
-                                        'hours' => (array) $work_hours,
-                                    ]);
-                                }
-
-                                // Social Networks (Links) Block.
-                                if ( $block['type'] == 'social_networks' && ( $networks = $listing->get_social_networks() ) ) {
-                                    c27()->get_section('list-block', [
-                                        'ref' => 'single-listing',
-                                        'icon' => ! empty( $block['icon'] ) ? $block['icon'] : 'mi view_module',
-                                        'title' => $block['title'],
-                                        'item_interface' => 'CASE27_LINK_ARRAY',
-                                        'items' => $networks,
-                                        'wrapper_class' => $block_wrapper_class,
-                                        'wrapper_id' => $block['id'],
-                                    ]);
-                                }
-
-                                // Author Block.
-                                if ($block['type'] == 'author') {
-                                    c27()->get_section('author-block', [
-                                        'icon' => ! empty( $block['icon'] ) ? $block['icon'] : 'mi account_circle',
-                                        'ref' => 'single-listing',
-                                        'author' => $listing->get_author(),
-                                        'title' => $block['title'],
-                                        'wrapper_class' => $block_wrapper_class,
-                                        'wrapper_id' => $block['id'],
-                                    ]);
-                                }
-
-                                // Code block.
-                                if ( $block['type'] == 'code' && ! empty( $block['content'] ) ) {
-                                    if ( ( $content = $listing->compile_string( $block['content'] ) ) ) {
-                                        c27()->get_section('raw-block', [
-                                            'icon' => ! empty( $block['icon'] ) ? $block['icon'] : 'mi view_module',
-                                            'ref' => 'single-listing',
-                                            'title' => $block['title'],
-                                            'wrapper_class' => $block_wrapper_class,
-                                            'wrapper_id' => $block['id'],
-                                            'content' => $content,
-                                            'do_shortcode' => true,
-                                        ]);
-                                    }
-                                }
-
-                                // Raw content block.
-                                if ( $block['type'] == 'raw' ) {
-                                    $content = '';
-                                    foreach ((array) $block['options'] as $option) {
-                                        if ($option['name'] == 'content') $content = $option['value'];
-                                    }
-
-                                    if ( $content ) {
-                                        c27()->get_section('raw-block', [
-                                            'icon' => ! empty( $block['icon'] ) ? $block['icon'] : 'mi view_module',
-                                            'ref' => 'single-listing',
-                                            'title' => $block['title'],
-                                            'wrapper_class' => $block_wrapper_class,
-                                            'wrapper_id' => $block['id'],
-                                            'content' => $content,
-                                            'block' => $block,
-                                            'listing' => $listing,
-                                        ]);
-                                    }
-                                }
-
-                                /**
-                                * @todo {
-                                *   pass $listing as parameter
-                                *   change case27/ to mylisting/
-                                *   check if this block type exists in sections/ directory, so the filter doesn't have to be used.
-                                * }
-                                */
-                                do_action( "case27/listing/blocks/{$block['type']}", $block );
 
                             endforeach ?>
 
@@ -714,47 +321,15 @@ $GLOBALS['case27_custom_styles'] .= sprintf( ' body.single-listing .title-style-
                 <?php endif ?>
 
                 <?php if ($menu_item['page'] == 'related_listings'): ?>
-                    <?php require locate_template( 'templates/single-listing/related.php' ) ?>
+                    <?php require locate_template( 'templates/single-listing/tabs/related-listings.php' ) ?>
                 <?php endif ?>
 
                 <?php if ($menu_item['page'] == 'store'): ?>
-                    <?php require locate_template( 'templates/single-listing/store.php' ) ?>
+                    <?php require locate_template( 'templates/single-listing/tabs/store.php' ) ?>
                 <?php endif ?>
 
                 <?php if ($menu_item['page'] == 'bookings'): ?>
-                    <div class="container">
-                        <div class="row">
-                            <?php // Contact Form Block.
-                            if ($menu_item['provider'] == 'basic-form') {
-                                $contact_form_id = absint( $menu_item['contact_form_id'] );
-                                $email_to = array_filter( [$menu_item['field']] );
-                                $recipients = [];
-                                foreach ( $email_to as $email_field ) {
-                                    if ( ( $email = $listing->get_field( $email_field ) ) && is_email( $email ) ) {
-                                        $recipients[] = $email;
-                                    }
-                                }
-
-                                if ( $contact_form_id && count( $email_to ) && count( $recipients ) ) {
-                                    c27()->get_section( 'raw-block', [
-                                        'ref' => 'single-listing',
-                                        'content' => str_replace('%case27_recipients%', join('|', $email_to), do_shortcode( sprintf( '[contact-form-7 id="%d"]', $contact_form_id ) ) ),
-                                        'wrapper_class' => 'col-md-6 col-md-push-3 col-sm-8 col-sm-push-2 col-xs-12 grid-item bookings-form-wrapper',
-                                        'escape_html' => false,
-                                    ] );
-                                }
-                            }
-                            ?>
-
-                            <?php // TimeKit Widget.
-                            if ($menu_item['provider'] == 'timekit' && ( $timekitID = $listing->get_field( $menu_item['field'] ) ) ): ?>
-                                <div class="col-md-8 col-md-push-2 c27-timekit-wrapper">
-                                    <iframe src="https://my.timekit.io/<?php echo esc_attr( $timekitID ) ?>" frameborder="0"></iframe>
-                                </div>
-                            <?php endif ?>
-
-                        </div>
-                    </div>
+                    <?php require locate_template( 'templates/single-listing/tabs/bookings.php' ) ?>
                 <?php endif ?>
 
             </section>
