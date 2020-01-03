@@ -31,7 +31,6 @@ if ( empty( $data['wrapper_id'] ) ) {
 $mapargs = htmlspecialchars( json_encode( $data['options'] ), ENT_QUOTES, 'UTF-8' );
 
 global $post;
-
 $job_location = get_post_meta( $post->ID, '_job_location', true );
 
 ?>
@@ -51,7 +50,7 @@ $job_location = get_post_meta( $post->ID, '_job_location', true );
 					<?php if ($data['icon_style'] != 3): ?>
 						<?php echo c27()->get_icon_markup($data['icon']) ?>
 					<?php endif ?>
-					<h5><?php echo esc_html( $data['title'] ) ?>: <?php echo esc_html( $job_location ) ?></h5>
+					<h5><?php echo esc_html( $data['title'] ) ?> : <?php echo esc_html( $job_location ) ?></h5>
 				</div>
 
 				<?php if ( $data['show_get_directions'] && ! empty( $data['options']['locations'] )  ): ?>
