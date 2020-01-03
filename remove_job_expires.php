@@ -49,7 +49,8 @@ add_action( 'init', function() {
 
             printf( '<p style="color: green;">Expiry Date successful for listing #%d </p>', $listing->ID );
 
-            delete_post_meta( $listing->ID, '_job_expires' );
+           
+            update_post_meta( $listing->ID, '_job_expires', date('Y-m-d', strtotime(' + 43 days')) );
 
             // Change the status of each post to pending
             $updated = wp_update_post( array( 'ID' => $listing->ID, 'post_status' => 'publish' ) );
