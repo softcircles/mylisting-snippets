@@ -101,21 +101,21 @@ class Add_Listing_Form extends Base_Form {
 
 		// default fields
 		$this->fields = [
-			'job_title' => [
-				'label'       => __( 'Title', 'my-listing' ),
-				'type'        => 'text',
-				'required'    => true,
-				'placeholder' => '',
-				'priority'    => 1,
+			'job_title' => new \MyListing\Src\Forms\Fields\Text_Field( [
 				'slug' => 'job_title',
-			],
-			'job_description' => [
-				'label'    => __( 'Description', 'my-listing' ),
-				'type'     => 'wp-editor',
+				'label' => __( 'Title', 'my-listing' ),
+				'required' => true,
+				'priority' => 1,
+				'is_custom' => false,
+			] ),
+
+			'job_description' => new \MyListing\Src\Forms\Fields\Texteditor_Field( [
+				'slug' => 'job_description',
+				'label' => __( 'Description', 'my-listing' ),
 				'required' => true,
 				'priority' => 5,
-				'slug' => 'job_description',
-			],
+				'is_custom' => false,
+			] ),
 		];
 
 		$listing = null;
@@ -123,7 +123,7 @@ class Add_Listing_Form extends Base_Form {
 
 		// Submit listing form: Listing type is passed as a POST parameter.
 		if ( $type_slug = c27()->get_submission_listing_type() ) {
-			$type = \MyListing\Ext\Listing_Types\Listing_Type::get_by_name( $type_slug );
+			$type = \MyListing\Src\Listing_Type::get_by_name( $type_slug );
 		}
 
 		// Edit listing form: Listing ID is available as a GET parameter.
@@ -146,8 +146,14 @@ class Add_Listing_Form extends Base_Form {
 
 		// filter out fields set to be hidden from the frontend submission form
 		$fields = array_filter( $fields, function( $field ) {
-			return isset( $field['show_in_submit_form'] ) && $field['show_in_submit_form'] == true;
+			return $field->props['show_in_submit_form'] == true;
 		} );
+
+		if ( $listing ) {
+			foreach ( $fields as $field ) {
+				$field->set_listing( $listing );
+			}
+		}
 
 		$fields = apply_filters( 'mylisting/submission/fields', $fields, $listing );
 
@@ -176,23 +182,12 @@ class Add_Listing_Form extends Base_Form {
 		if ( $this->job_id && ( $listing = \MyListing\Src\Listing::get( $this->job_id ) ) ) {
 			foreach ( $this->fields as $key => $field ) {
 				// form has been submitted, value is retrieved from $_POST through `validate_fields` method.
-				if ( isset( $field['value'] ) ) {
+				if ( isset( $field->props['value'] ) ) {
 					continue;
 				}
 
-				if ( $key === 'job_title' ) {
-					$this->fields['job_title']['value'] = $listing->get_name();
-				} elseif ( $key === 'job_description' ) {
-					$this->fields['job_description']['value'] = $listing->get_field( 'description' );
-				} elseif ( $field['type'] === 'term-select' ) {
-					$this->fields[ $key ]['value'] = wp_get_object_terms( $listing->get_id(), $field['taxonomy'], [
-						'orderby' => 'term_order',
-						'order' => 'ASC',
-						'fields' => 'ids',
-					] );
-				} else {
-					$this->fields[ $key ]['value'] = get_post_meta( $listing->get_id(), '_'.$key, true );
-				}
+				$field->set_listing( $listing );
+				$this->fields[ $key ]['value'] = $field->get_value();
 			}
 		}
 
@@ -221,7 +216,7 @@ class Add_Listing_Form extends Base_Form {
 			$listing = \MyListing\Src\Listing::get( $this->job_id );
 			$type = $listing ? $listing->type : false;
 		} elseif ( $type_slug = c27()->get_submission_listing_type() ) {
-			$type = \MyListing\Ext\Listing_Types\Listing_Type::get_by_name( $type_slug );
+			$type = \MyListing\Src\Listing_Type::get_by_name( $type_slug );
 		}
 
 		$this->listing_type = $type;
@@ -265,16 +260,8 @@ class Add_Listing_Form extends Base_Form {
 		$this->init_fields();
 
 		// field validation
-		foreach ( $this->fields as $key => $fieldarr ) {
-			// check if field class exists
-			$fieldclass = sprintf( '\MyListing\Src\Forms\Fields\%s_Field', c27()->file2class( $fieldarr['type'] ) );
-			if ( ! class_exists( $fieldclass ) ) {
-				continue;
-			}
-
+		foreach ( $this->fields as $key => $field ) {
 			// get posted value
-			$field = new $fieldclass( $fieldarr );
-			$field->set_listing_type( $this->listing_type );
 			$value = $field->get_posted_value();
 
 			// save posted value
@@ -311,10 +298,6 @@ class Add_Listing_Form extends Base_Form {
 			'comment_status' => 'open',
 		];
 
-		if ( ! $this->job_id ) {
-			$data['post_name'] = sanitize_title( $post_title );
-		}
-
 		if ( $status ) {
 			$data['post_status'] = $status;
 		}
@@ -344,7 +327,7 @@ class Add_Listing_Form extends Base_Form {
 		 * @since 2.0
 		 */
 		if ( empty( $_REQUEST['job_id'] ) && ( $listing_type = c27()->get_submission_listing_type() ) ) {
-			if ( $type = \MyListing\Ext\Listing_Types\Listing_Type::get_by_name( $listing_type ) ) {
+			if ( $type = \MyListing\Src\Listing_Type::get_by_name( $listing_type ) ) {
 				update_post_meta( $this->job_id, '_case27_listing_type', $type->get_slug() );
 			}
 		}
@@ -354,19 +337,9 @@ class Add_Listing_Form extends Base_Form {
 		 *
 		 * @since 2.1
 		 */
-		foreach ( $this->fields as $key => $fieldarr ) {
-			// check if field class exists
-			$fieldclass = sprintf( '\MyListing\Src\Forms\Fields\%s_Field', c27()->file2class( $fieldarr['type'] ) );
-			if ( ! class_exists( $fieldclass ) ) {
-				continue;
-			}
-
-			// initiate class
-			$field = new $fieldclass( $fieldarr );
-			$field->set_listing( $listing );
-			$field->set_listing_type( $listing->type );
-
+		foreach ( $this->fields as $key => $field ) {
 			// update
+			$field->set_listing( $listing );
 			$field->update();
 		}
 
@@ -383,6 +356,9 @@ class Add_Listing_Form extends Base_Form {
 			mlog()->warn( 'No listing id provided.' );
 			return;
 		}
+
+		// refresh cache for listing
+		\MyListing\Src\Listing::force_get( $this->job_id );
 
 		global $post;
 		$post = get_post( $this->job_id );
