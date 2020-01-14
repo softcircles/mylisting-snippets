@@ -100,7 +100,7 @@ if ( is_singular('post') ) {
 							<?php ob_start(); ?>
 							<div class="form-group">
 								<label><?php _e( 'Your Message', 'my-listing' ) ?></label>
-								<textarea rows="5" name="comment" required="required" placeholder="<?php echo esc_html__('Enter message...', 'my-listing') ?>"></textarea>
+								<textarea rows="5" name="comment" placeholder="<?php echo esc_html__('Enter message...', 'my-listing') ?>"></textarea>
 							</div>
 							<?php $message_field = ob_get_clean(); ?>
 
@@ -140,7 +140,6 @@ if ( is_singular('post') ) {
 									'gallery_field' => $gallery_field,
 									'author'        => $author_field,
 									'email'         => $email_field,
-									'comment_field' => $message_field,
 									'cookies' 		=> $cookies_field,
 									'submit'        => $submit_field,
 								);
@@ -160,10 +159,6 @@ if ( is_singular('post') ) {
 										<form action="<?php echo esc_url( admin_url('admin-post.php') ); ?>" method="post" enctype="multipart/form-data">
 											<?php echo MyListing\Ext\Reviews\Reviews::get_ratings_field( $user_review, get_the_ID() ); ?>
 											<?php echo MyListing\Ext\Reviews\Reviews::get_gallery_field( $user_review, get_the_ID() ); ?>
-											<div class="form-group">
-												<label><?php _e( 'Your Message', 'my-listing' ) ?></label>
-												<textarea rows="5" name="comment" required="required" placeholder="<?php echo esc_html__('Enter message...', 'my-listing') ?>"><?php echo get_comment_text( $user_review ) ?></textarea>
-											</div>
 											<input type="hidden" name="action" value="update_review">
 											<input type="hidden" name="listing_id" value="<?php echo esc_attr( get_the_ID() ) ?>">
 											<?php if ($GLOBALS['case27_reviews_allow_rating']): ?>
