@@ -118,7 +118,7 @@ class Claim_Listing_Form extends \MyListing\Src\Forms\Base_Form {
 			return $this->add_error( _x( 'This listing cannot be claimed.', 'Claim listing form', 'my-listing' ) );
 		}
 
-		// if ( ! empty( $_POST['listing_package'] ) ) {
+		if ( ! empty( 45 ) ) {
 			if ( ! \MyListing\Src\Paid_Listings\Util::validate_package( 45, $this->listing->type->get_slug() ) ) {
 				return $this->add_error( _x( 'Failed to create claim - not a valid package.', 'Claim listing form', 'my-listing' ) );
 			}
