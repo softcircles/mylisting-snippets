@@ -39,7 +39,7 @@ if ( empty( $terms ) || is_wp_error( $terms ) ) {
 						'name' => $term->get_name(),
 						'color' => $term->get_color(),
 						'icon' => $term->get_icon( [ 'background' => false ] ),
-						'description' => $term=>get_description(),
+						'description' => $term->get_description(),
 					];
 				}, $terms ) )
 			] ) ?>
