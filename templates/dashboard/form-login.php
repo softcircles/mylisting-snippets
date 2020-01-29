@@ -1,3 +1,6 @@
+<?php do_action( 'woocommerce_before_customer_login_form' ); ?>
+<?php add_filter( 'mylisting\auth_modals\show', '__return_false' ) ?>
+<?php $show_register_form = get_option( 'woocommerce_enable_myaccount_registration' ) === 'yes' ?>
 <section class="i-section no-modal">
 	<div class="container">
 		<div class="row">
