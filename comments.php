@@ -100,7 +100,7 @@ if ( is_singular('post') ) {
 							<?php ob_start(); ?>
 							<div class="form-group">
 								<label><?php _e( 'Your Message', 'my-listing' ) ?></label>
-								<textarea rows="5" name="comment" placeholder="<?php echo esc_html__('Enter message...', 'my-listing') ?>"></textarea>
+								<textarea rows="5" name="comment" required="required" placeholder="<?php echo esc_html__('Enter message...', 'my-listing') ?>"></textarea>
 							</div>
 							<?php $message_field = ob_get_clean(); ?>
 
@@ -111,6 +111,14 @@ if ( is_singular('post') ) {
                                 <label for="wp-comment-cookies-consent"><?php _e( 'Save my name, email, and website in this browser for the next time I comment.', 'my-listing' ) ?></label>
                             </div>
 							<?php $cookies_field = ob_get_clean(); ?>
+
+							<!-- Cookies Field -->
+							<?php ob_start(); ?>
+							<div class="comment-form-disclaimer-consent md-checkbox">
+								<p class="wp-comment-disclaimer-consent" id="wp-comment-disclaimer-consent"><?php _e( 'All testimonials will be subject to review for authenticity. And text includes minimum 300 characters and Maximum 1500 characters.', 'my-listing' ) ?></p>
+                            </div>
+							<?php $disclaimer_field = ob_get_clean(); ?>
+
 
 							<!-- Submit Field -->
 							<?php ob_start(); ?>
@@ -125,7 +133,7 @@ if ( is_singular('post') ) {
 
 							<?php
 							$args = array(
-								'comment_field'       => $rating_field . $gallery_field . $submit_field,
+								'comment_field'       => $rating_field . $gallery_field . $message_field . $submit_field,
 								'class_submit'        => 'hide',
 								'cancel_reply_before' => ' &middot; <span>',
 								'cancel_reply_after'  => '</span>',
@@ -140,11 +148,13 @@ if ( is_singular('post') ) {
 									'gallery_field' => $gallery_field,
 									'author'        => $author_field,
 									'email'         => $email_field,
+									'comment_field' => $message_field,
+									'disclaimer'	=> $disclaimer_field,
 									'cookies' 		=> $cookies_field,
 									'submit'        => $submit_field,
 								);
 							} elseif ( $user_review ) {
-								$args['comment_field'] = $submit_field;
+								$args['comment_field'] = $message_field . $submit_field;
 							}
 							?>
 
@@ -159,6 +169,10 @@ if ( is_singular('post') ) {
 										<form action="<?php echo esc_url( admin_url('admin-post.php') ); ?>" method="post" enctype="multipart/form-data">
 											<?php echo MyListing\Ext\Reviews\Reviews::get_ratings_field( $user_review, get_the_ID() ); ?>
 											<?php echo MyListing\Ext\Reviews\Reviews::get_gallery_field( $user_review, get_the_ID() ); ?>
+											<div class="form-group">
+												<label><?php _e( 'Your Message', 'my-listing' ) ?></label>
+												<textarea rows="5" name="comment" required="required" placeholder="<?php echo esc_html__('Enter message...', 'my-listing') ?>"><?php echo get_comment_text( $user_review ) ?></textarea>
+											</div>
 											<input type="hidden" name="action" value="update_review">
 											<input type="hidden" name="listing_id" value="<?php echo esc_attr( get_the_ID() ) ?>">
 											<?php if ($GLOBALS['case27_reviews_allow_rating']): ?>
