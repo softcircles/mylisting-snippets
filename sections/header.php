@@ -69,12 +69,12 @@ if ($data['scroll_border_color']) {
 				<?php if ( $data['logo'] ): ?>
 					<?php if ( $data['scroll_logo'] ): ?>
 						<a href="<?php echo esc_url( home_url('/') ) ?>" class="scroll-logo">
-							<img src="<?php echo esc_url( $data['scroll_logo'] ) ?>">
+							<img src="<?php echo esc_url( $data['scroll_logo'] ) ?>" alt="YOUR-ALT-TEXT">
 						</a>
 					<?php endif ?>
 
-					<a href="<?php echo esc_url( home_url('/') ) ?>" class="static-logo">
-						<img src="<?php echo esc_url( $data['logo'] ) ?>">
+					<a href="<?php echo esc_url( home_url('/') ) ?>" class="static-logo" >
+						<img src="<?php echo esc_url( $data['logo'] ) ?>" alt="YOUR-ALT-TEXT">
 					</a>
 				<?php else: ?>
 					<a href="<?php echo esc_url( home_url('/') ) ?>" class="header-logo-text">
@@ -91,7 +91,7 @@ if ($data['scroll_border_color']) {
 								<div class="avatar">
 									<?php echo get_avatar( $current_user->ID ) ?>
 								</div>
-								<?php esc_html_e( 'My Account', 'my-listing' ); ?>
+								<?php echo esc_attr( $current_user->display_name ) ?>
 								<?php if ( class_exists('WooCommerce') ): ?>
 									<div class="submenu-toggle"><i class="material-icons">arrow_drop_down</i></div>
 								<?php endif; ?>
@@ -202,7 +202,7 @@ if ($data['scroll_border_color']) {
 									<div class="avatar">
 										<?php echo get_avatar( $current_user->ID ) ?>
 									</div>
-									<?php esc_html_e( 'My Account', 'my-listing' ); ?>
+									<?php echo esc_attr( $current_user->display_name ) ?>
 									<?php if ( class_exists('WooCommerce') ): ?>
 										<div class="submenu-toggle"><i class="mi arrow_drop_down"></i></div>
 									<?php endif; ?>
