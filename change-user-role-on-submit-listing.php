@@ -24,4 +24,4 @@ function update_roles()
    }
 }
  
-add_action('publish_job_listing', 'update_roles');
+add_action('mylisting/submission/save-listing-data', 'update_roles');
