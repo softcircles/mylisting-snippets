@@ -62,11 +62,7 @@ if ( absint( $column_count ) === 4 && $item_count >= 4 ) {
 					<img src="<?php echo esc_url( $image ) ?>" class="plan-image">
 				<?php endif ?>
 
-				<?php if ($product->get_price() == 0 ) { ?>
-					<h2 class="plan-price case27-primary-text"><?php esc_html_e( 'Free', 'my-listing' ); ?></h2>
-				<?php } else { ?>
-					<h2 class="plan-price case27-primary-text"><?php echo $product->get_price_html(); ?></h2>
-				<?php } ?>
+				<h2 class="plan-price case27-primary-text"><?php echo $product->get_price_html(); ?></h2>
 				<p class="plan-desc"><?php echo $product->get_short_description(); ?></p>
 				<div class="plan-features">
 					<?php if ( is_array( $description ) ): ?>
@@ -130,9 +126,14 @@ if ( absint( $column_count ) === 4 && $item_count >= 4 ) {
 							<i class="mi arrow_forward"></i>
 						</a>
 					<?php else: ?>
-						<?php if ( $product->is_purchasable() ): ?>
+						<?php if ( $product->is_purchasable() && $product->get_price() > 0 ): ?>
 							<a class="select-plan buttons button-2 cts-trigger-buy-new" href="#">
 								<?php _e( 'Buy Package', 'my-listing' ); ?>
+								<i class="mi arrow_forward"></i>
+							</a>
+						<?php elseif ( $product->is_purchasable() && $product->get_price() == 0 ): ?>
+							<a class="select-plan buttons button-2 cts-trigger-buy-new" href="#">
+								<?php _e( 'Free', 'my-listing' ); ?>
 								<i class="mi arrow_forward"></i>
 							</a>
 						<?php else: ?>
