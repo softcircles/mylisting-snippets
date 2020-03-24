@@ -26,7 +26,7 @@ add_action( 'init', function() {
             'post_type' => 'job_listing',
             'offset'   => $offset,
             'posts_per_page' => $next_data,
-            'post_status' => 'expired',
+            'post_status' => ['publish', 'expired', 'pending', 'preview', 'pending_payment'],
             'meta_query'    => [
                 [
                    'key'        => '_job_expires',
