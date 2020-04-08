@@ -19,7 +19,7 @@ if ( ! ( $marker_image = $listing->get_logo( 'thumbnail' ) ) ) {
     $marker_image = c27()->image( 'marker.jpg' );
 }
 
- $all_terms = $listing->get_field( 'category' );
+$all_terms = $listing->get_field( 'category' );
 
  if ( ! empty( $all_terms ) || ! is_wp_error( $all_terms ) ) {
 	$terms = array_filter( array_map( function( $term ) {
@@ -31,13 +31,11 @@ if ( ! ( $marker_image = $listing->get_logo( 'thumbnail' ) ) ) {
 			'link' => $term->get_link(),
 			'name' => $term->get_name(),
 			'color' => $term->get_color(),
-			// 'icon' => $term->get_icon( [ 'background' => false ] ),
+			'icon' => $term->get_icon( [ 'background' => false ] ),
 			'icon' => $term->get_icon_image_url(),
 		];
 	}, $all_terms ) );
 }
-
- // print_r([$terms[0]['icon'], $terms]); exit();
 // use the listing address to display the marker, which would then get geocoded by the map service
 $location_arr = [
     'address' => $field->get_value(),
