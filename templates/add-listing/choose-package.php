@@ -131,9 +131,9 @@ if ( absint( $column_count ) === 4 && $item_count >= 4 ) {
 								<?php _e( 'Buy Package', 'my-listing' ); ?>
 								<i class="mi arrow_forward"></i>
 							</a>
-						<?php elseif ( $product->is_purchasable() && $product->get_price() == 0 ): ?>
+							<?php elseif ( $product->is_purchasable() && $product->get_price() == 0 ): ?>
 							<a class="select-plan buttons button-2 cts-trigger-buy-new" href="#">
-								<?php _e( 'Free', 'my-listing' ); ?>
+								<?php _e( 'Continue', 'my-listing' ); ?>
 								<i class="mi arrow_forward"></i>
 							</a>
 						<?php else: ?>
