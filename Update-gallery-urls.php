@@ -58,3 +58,30 @@ add_action( 'init', function() {
     
     exit('All listings are updated, you can close this window.');
 }, 250 );
+
+function ml_unserialize_data_replace( $from = '', $to = '', $data = '', $serialised = false ) {
+	try {
+		if ( false !== is_serialized( $data ) ) {
+			$unserialized = unserialize( $data );
+			$data = ml_unserialize_data_replace( $from, $to, $unserialized, true );
+		}
+		elseif ( is_array( $data ) ) {
+			$_tmp = array( );
+			foreach ( $data as $key => $value ) {
+				$_tmp[ $key ] = ml_unserialize_data_replace( $from, $to, $value, false );
+			}
+			$data = $_tmp;
+			unset( $_tmp );
+		}
+		else {
+			if ( is_string( $data ) )
+				$data = str_replace( $from, $to, $data );
+		}
+		if ( $serialised )
+			return serialize( $data );
+	} catch( Exception $error ) {
+
+	}
+
+	return $data;
+}
