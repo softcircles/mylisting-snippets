@@ -7,30 +7,6 @@
 if ( ! defined('ABSPATH') ) {
 	exit;
 }
-if ( $block->get_prop( 'show_field' ) == '_zodiac_sign' ) {
-	$block_content = get_post_meta( $listing->get_id(), '_zodiac_sign', true );
-	$escape_html = true;
- ?>
-	<div class="<?php echo esc_attr( $block->get_wrapper_classes() ) ?>" id="<?php echo esc_attr( $block->get_wrapper_id() ) ?>">
-	<div class="element content-block <?php echo $escape_html ? 'plain-text-content' : 'wp-editor-content' ?>">
-		<div class="pf-head">
-			<div class="title-style-1">
-				<i class="<?php echo esc_attr( $block->get_icon() ) ?>"></i>
-				<h5><?php echo esc_html( $block->get_title() ) ?></h5>
-			</div>
-		</div>
-		<div class="pf-body">
-			<?php if ( $escape_html ): ?>
-				<p><?php echo wpautop( wp_kses( $block_content, [] ) ) ?></p>
-			<?php else: ?>
-				<?php echo wpautop( $block_content ) ?>
-			<?php endif ?>
-		</div>
-	</div>
-</div>
-
-<?php
-} else {
 
 // check whether the requested field has a value to display
 if ( ! ( $listing->has_field( $block->get_prop( 'show_field' ) ) ) ) {
@@ -85,9 +61,8 @@ if ( $allow_shortcodes ) {
 			<?php if ( $escape_html ): ?>
 				<p><?php echo wpautop( wp_kses( $block_content, [] ) ) ?></p>
 			<?php else: ?>
-				<?php echo wpautop( $block_content ) ?>
+				<?php echo wpautop( str_replace('<a ', '<a data-vars-ga-category="TEST123" ', $block_content) ) ?>
 			<?php endif ?>
 		</div>
 	</div>
 </div>
-<?php } ?>
