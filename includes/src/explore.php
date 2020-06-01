@@ -110,6 +110,7 @@ class Explore {
 				'defaultTab' => ! empty( $tabs ) ? reset( $tabs )['type'] : 'search-form',
 				'taxonomies' => $taxonomies,
 				'max_num_pages' => 0,
+				'is_first_load' => true,
 			];
 
 			$index++;
@@ -161,11 +162,28 @@ class Explore {
 			$field = isset( $base_taxonomies[ $taxonomy ] ) ? $base_taxonomies[ $taxonomy ]['field'] : $taxonomy;
 
 			// get the active term if available
-			$active_term = false;
+			$active_term_config = false;
 			$active_term_id = 0;
 			if ( get_query_var( $query_var ) && ( $term = get_term_by( 'slug', sanitize_title( get_query_var( $query_var ) ), $tax ) ) ) {
 				$active_term = \MyListing\Src\Term::get( $term );
 				$active_term_id = $active_term->get_id();
+
+				// @todo: refactor, prevent duplicate code with explore-terms-endpoint.php
+				$background = $active_term->get_image();
+				$active_term_config = [
+					'term_id' => $active_term->get_id(),
+					'name' => $active_term->get_name(),
+					'description' => $active_term->get_description(),
+					'slug' => $active_term->get_slug(),
+					'link' => $active_term->get_link(),
+					'parent' => $active_term->get_parent_id(),
+					'count' => $active_term->get_count(),
+					'single_icon' => $active_term->get_icon( [ 'background' => false, 'color' => true ] ),
+					'color' => $active_term->get_color(),
+					'icon' => $active_term->get_icon( [ 'background' => false, 'color' => false ] ),
+					'background' => is_array( $background ) && ! empty( $background ) ? $background['sizes']['large'] : false,
+					'listing_types' => array_filter( array_map( 'absint', (array) get_term_meta( $active_term->get_id(), 'listing_type', true ) ) ),
+				];
 
 				// if we're loading a term explore page, then determine the best listing type to load based on the term's taxonomy.
 				$this->set_active_type_by_taxonomy( [ 'taxonomy' => $tax, 'tab_id' => $taxonomy, 'field_name' => $field ], $active_term );
@@ -180,7 +198,7 @@ class Explore {
 	        	'termsLoading' => false,
 	        	'termsPage' => 0,
 	        	'activeTermId' => $active_term_id,
-	        	'activeTerm' => false,
+	        	'activeTerm' => $active_term_config,
 	        	'hasMore' => false,
 	        	'terms' => new \stdClass,
 			];
@@ -324,7 +342,8 @@ class Explore {
 	    	$cfg->link = $term->get_link();
 	    	$cfg->image = is_array( $image ) && ! empty( $image ) ? $image['sizes']['medium_large'] : false;
 	    	$cfg->is_yoast = defined( 'WPSEO_VERSION' );
-			$cfg->description = $term->get_description();
+	    	$cfg->description = $term->get_description();
+			
 
 			if ( $cfg->is_yoast ) {
 				$meta = get_option( 'wpseo_taxonomy_meta' );
@@ -333,20 +352,11 @@ class Explore {
 				$term_id = $term_object->term_id;
 				$replacer = new \WPSEO_Replace_Vars();
 
-				if ( ! empty( $term_object->parent ) 
-	            	&& isset( $meta[ $tax_slug ][ $term_id ]['wpseo_title'] )
-	            	&& strpos( $meta[ $tax_slug ][ $term_id ]['wpseo_title'], 'parent_title' ) !== false 
-	            ) {
-	            	$parents = self::get_term_parents( $term_object, $tax['taxonomy'] );
-	            	$meta[ $tax_slug ][ $term_id ]['wpseo_title'] = str_replace('%%parent_title%%', $parents, $meta[ $tax_slug ][ $term_id ]['wpseo_title'] );
-	            }
-
 				if ( isset( $meta[ $tax_slug ][ $term_id ]['wpseo_title'] ) ) {
 					$cfg->title = $replacer->replace(
 						$meta[ $tax_slug ][ $term_id ]['wpseo_title'],
 						$term_object
 					);
-
 	            } else {
 					$cfg->title = $replacer->replace(
 						\WPSEO_Options::get('title-tax-'.$tax_slug, ''),
@@ -359,13 +369,13 @@ class Explore {
 						$meta[ $tax_slug ][ $term_id ]['wpseo_desc'],
 						$term_object
 					);
-
-	            } else {
+	            } elseif( empty( $cfg->description ) ) {
 					$cfg->description = $replacer->replace(
 						\WPSEO_Options::get('metadesc-tax-'.$tax_slug, ''),
 						$term_object
 					);
 	            }
+
 			}
 
 			if ( empty( $cfg->title ) ) {
@@ -408,7 +418,7 @@ class Explore {
 				}
 
 				// output term image meta tag
-				if ( $cfg->image ) {
+				if ( $cfg->image && !$cfg->is_yoast ) {
 					printf( '<meta property="og:image" content="%s"/>'."\n", esc_attr( $cfg->image ) );
 				}
 			}, 1 );
@@ -423,25 +433,15 @@ class Explore {
 
 			// Yoast
 			add_filter( 'wpseo_title', function() use ( $cfg ) { return $cfg->title; }, 10e3 );
+			add_filter( 'wpseo_opengraph_url', function() use ( $cfg ) { return $cfg->link; }, 10e3 );
 			add_filter( 'wpseo_metadesc', function() use ( $cfg ) { return $cfg->description; } );
+			add_filter( 'wpseo_opengraph_desc', function() use ( $cfg ) { return $cfg->description; } );
 			add_filter( 'wpseo_canonical', function() use ( $cfg ) { return $cfg->link; } );
+			if ( $cfg->is_yoast && $cfg->image ) {
+				add_filter( 'wpseo_opengraph_image', function( $image ) use ( $cfg ) { return $cfg->image; }, 10e5, 1 );
+			}
 
 	    	return;
 	    }
-	}
-
-	public static function get_term_parents( $term, $tax ) {
-		$parents = [];
-		$ancestors = [];
-
-		while ( ! is_wp_error( $term ) && ! empty( $term->parent ) && ! in_array( $term->parent, $ancestors ) ) {
-			$ancestors[] = (int) $term->parent;
-			$term        = get_term( $term->parent, $tax );
-			if( ! is_wp_error( $term ) ) {
-				$parents[] = $term->name; 
-			}
-		}
-		
-		return implode( ' ' . \WPSEO_Utils::get_title_separator() . ' ', $parents );
 	}
 }
