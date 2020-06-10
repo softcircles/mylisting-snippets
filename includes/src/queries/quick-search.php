@@ -29,11 +29,18 @@ class Quick_Search extends Query {
 			'search_keywords' => $search_term,
 			'posts_per_page' => 5,
         	'orderby' => 'relevance',
-            'meta_query' => [ [
-                'key' => '_case27_listing_type',
-                'value' => '',
-                'compare' => '!=',
-            ] ],
+            'meta_query' => [
+            	[
+	                'key' => '_case27_listing_type',
+	                'value' => '',
+	                'compare' => '!=',
+	            ],
+	            [
+	                'key' => '_case27_listing_type',
+	                'value' => 'place',
+	                'compare' => '!=',
+	            ],
+            ],
 		] );
 
 		if ( ! is_wp_error( $query ) && $query->have_posts() ) {
@@ -81,19 +88,6 @@ class Quick_Search extends Query {
 				'taxonomy' => 'case27_job_listing_tags',
 				'search_term' => $search_term,
 			] );
-		}
-
-		$custom_taxonomies = mylisting_custom_taxonomies();
-
-		if ( $custom_taxonomies ) {
-
-			foreach ( $custom_taxonomies as $slug => $label ) {
-				$sections[$slug] = $this->get_terms( [
-					'title' => $label,
-					'taxonomy' => $slug,
-					'search_term' => $search_term,
-				] );
-			}
 		}
 
 		$sections = apply_filters( 'mylisting/quicksearch/sections', $sections );
