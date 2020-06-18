@@ -9,9 +9,15 @@ if ( ! defined('ABSPATH') ) {
 }
 
 $diff = $block->get_date_diff();
+
 if ( empty( $diff ) ) {
-	return;
-} ?>
+ return;
+}
+
+if ( ! $diff->invert ) {
+	return false;
+}
+?>
 
 <div class="<?php echo esc_attr( $block->get_wrapper_classes() ) ?>" id="<?php echo esc_attr( $block->get_wrapper_id() ) ?>">
 	<div class="element countdown-box countdown-block">
@@ -27,14 +33,10 @@ if ( empty( $diff ) ) {
 					<p><?php echo $diff->invert ? sprintf('%02d', $diff->format('%a')) : '00' ?></p>
 					<span><?php _e( 'Days', 'my-listing' ) ?></span>
 				</li>
-				<?php 
-					$hours = $diff->invert ? $diff->format('%H') : '00';  
-					if( (int)$hours == $hours && (int)$hours > 0 ) : ?>
-					<li>
-						<p><?php echo $hours ?></p>
-						<span><?php _e( 'Hours', 'my-listing' ) ?></span>
-					</li>
-				<?php endif; ?>
+				<li>
+					<p><?php echo $diff->invert ? $diff->format('%H') : '00' ?></p>
+					<span><?php _e( 'Hours', 'my-listing' ) ?></span>
+				</li>
 				<li>
 					<p><?php echo $diff->invert ? $diff->format('%I') : '00' ?></p>
 					<span><?php _e( 'Minutes', 'my-listing' ) ?></span>
