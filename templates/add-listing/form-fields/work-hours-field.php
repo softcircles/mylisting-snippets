@@ -1,14 +1,14 @@
 <?php
 $weekdays_short = [
-	__( 'Mon', 'my-listing' ), __( 'Tue', 'my-listing' ), __( 'Wed', 'my-listing' ),
-	__( 'Thu', 'my-listing' ), __( 'Fri', 'my-listing' ), __( 'Sat', 'my-listing' ), __( 'Sun', 'my-listing' )
+	__( 'Sun', 'my-listing' ), __( 'Mon', 'my-listing' ), __( 'Tue', 'my-listing' ), __( 'Wed', 'my-listing' ),
+	__( 'Thu', 'my-listing' ), __( 'Fri', 'my-listing' ), __( 'Sat', 'my-listing' )
 ];
 
 $daystatuses = [
 	'enter-hours' => __( 'Enter hours', 'my-listing' ),
-	//'open-all-day' => __( 'Open all day', 'my-listing' ),
+	'open-all-day' => __( 'Open all day', 'my-listing' ),
 	'closed-all-day' => __( 'Closed all day', 'my-listing' ),
-	//'by-appointment-only' => __( 'By appointment only', 'my-listing' ),
+	'by-appointment-only' => __( 'By appointment only', 'my-listing' ),
 ];
 
 $schedule = new MyListing\Src\Work_Hours( ! empty( $field['value'] ) ? (array) $field['value'] : [] );
@@ -21,7 +21,7 @@ $schedule = new MyListing\Src\Work_Hours( ! empty( $field['value'] ) ? (array) $
 
 				<?php $i = 0; foreach ( $schedule->get_schedule() as $weekday ): ?>
 
-					<li role="presentation" <?php echo $weekday['day'] == 'Monday' ? 'class="active"' : '' ?>>
+					<li role="presentation" <?php echo $weekday['day'] == 'Sunday' ? 'class="active"' : '' ?>>
 						<a href="#day_<?php echo esc_attr( $weekday['day'] ) ?>"
 						   aria-controls="day_<?php echo esc_attr( $weekday['day'] ) ?>"
 						   role="tab" class="tab-switch">
@@ -40,7 +40,7 @@ $schedule = new MyListing\Src\Work_Hours( ! empty( $field['value'] ) ? (array) $
 				$daykey = ( isset( $field['name'] ) ? $field['name'] : $key ) . "[{$weekday['day']}]";
 				?>
 
-				<div role="tabpanel" class="day-wrapper <?php echo esc_attr( 'day-status-' . $weekday['status'] ) ?> tab-pane fade <?php echo $weekday['day'] == 'Monday' ? 'active in' : '' ?>" id="day_<?php echo esc_attr( $weekday['day'] ) ?>">
+				<div role="tabpanel" class="day-wrapper <?php echo esc_attr( 'day-status-' . $weekday['status'] ) ?> tab-pane fade <?php echo $weekday['day'] == 'Sunday' ? 'active in' : '' ?>" id="day_<?php echo esc_attr( $weekday['day'] ) ?>">
 					<div class="repeater work-hours-repeater" data-list="<?php echo htmlspecialchars( json_encode( $schedule->get_day_ranges( $weekday['day'] ) ), ENT_QUOTES, 'UTF-8' ) ?>">
 						<div data-repeater-list="<?php echo esc_attr( $daykey ) ?>">
 							<?php // dump($weekday) ?>
