@@ -127,15 +127,13 @@ class Profile_Screen {
 
     	// remove avatar if empty
     	if ( empty( $_POST['current_avatars'] ) ) {
-			$old_profile_photo = get_user_meta( $user_id, '_mylisting_profile_photo', true );
-			wp_delete_attachment( $old_profile_photo );
 	        delete_user_meta( $user_id, '_mylisting_profile_photo' );
 	        delete_user_meta( $user_id, '_mylisting_profile_photo_url' );
     		return;
     	}
 
     	// validate file extension
-    	$file_url = esc_url_raw( $_POST['current_avatars'] );
+    	$file_url = esc_url_raw( base64_decode( str_replace( 'b64:', '', $_POST['current_avatars'] ) ) );
 		$file_info = wp_check_filetype( current( explode( '?', $file_url ) ) );
 		if ( ! ( $file_info && in_array( $file_info['ext'], [ 'jpg', 'gif', 'png', 'jpeg', 'jpe' ], true ) ) ) {
 			return;
@@ -162,9 +160,6 @@ class Profile_Screen {
 			'ID' => $attachment->ID,
 			'post_status' => 'inherit',
 		] );
-		
-		$old_profile_photo = get_user_meta( $user_id, '_mylisting_profile_photo', true );
-		wp_delete_attachment( $old_profile_photo );
 
 		// update user avatar metadata
         update_user_meta( $user_id, '_mylisting_profile_photo', $attachment->ID );
