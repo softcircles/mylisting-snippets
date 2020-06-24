@@ -126,13 +126,6 @@ abstract class Network {
             $args['user_login'] = sprintf( '%s.%s', $args['user_login'], bin2hex( openssl_random_pseudo_bytes(2) ) );
         }
 
-        // Handle password creation.
-        $password_generated = false;
-        if ( 'yes' === get_option( 'woocommerce_registration_generate_password' ) ) {
-            $password           = wp_generate_password();
-            $password_generated = true;
-        }
-
         // @todo: role?
         $user_id = wp_insert_user( $args );
 
@@ -144,9 +137,8 @@ abstract class Network {
         update_user_meta( $user_id, 'mylisting_profile_picture', $this->name );
 
     	if ( ! is_wp_error( $user_id ) && $this->login_existing_user( $args['user_login'] ) ) {
-
-            do_action( 'woocommerce_created_customer', $user_id, $args, $password_generated );
-
+            // add support for woocommerce new account email
+            do_action( 'woocommerce_created_customer', $user_id, $args, true );
             return true;
         }
 
@@ -209,13 +201,13 @@ abstract class Network {
      * @since 1.6.3
      */
 	public function get_login_redirect_url() {
-		if ( ! empty( $_POST['redirect'] ) ) {
-			$redirect = $_POST['redirect'];
-		} elseif ( wc_get_raw_referer() ) {
-			$redirect = wc_get_raw_referer();
-		} else {
+		// if ( ! empty( $_POST['redirect'] ) ) {
+		// 	$redirect = $_POST['redirect'];
+		// } elseif ( wc_get_raw_referer() ) {
+		// 	$redirect = wc_get_raw_referer();
+		// } else {
 			$redirect = wc_get_page_permalink( 'myaccount' );
-		}
+		// }
 
         // Add unique query arg to avoid cached pages on redirect.
         $redirect = add_query_arg( 't', time(), $redirect );
