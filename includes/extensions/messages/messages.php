@@ -169,29 +169,29 @@ class Messages {
 
         // WordPress AJAX hooks
         // Sync Messages
-        add_action( 'mylisting_ajax_mylisting_sync_messages', [ &$this, 'sync_activities' ] );
+        add_action( 'mylisting_ajax_mylisting_sync_messages', [ $this, 'sync_activities' ] );
 
         // send message
-        add_action( 'mylisting_ajax_mylisting_send_message', [ &$this, 'send_message' ] );
+        add_action( 'mylisting_ajax_mylisting_send_message', [ $this, 'send_message' ] );
 
         // delete message
-        add_action( 'mylisting_ajax_mylisting_delete_message', [ &$this, 'delete_message' ] );
+        add_action( 'mylisting_ajax_mylisting_delete_message', [ $this, 'delete_message' ] );
 
         // read conversation
-        add_action( 'mylisting_ajax_mylisting_read_conversation', [ &$this, 'read_conversation' ] );
+        add_action( 'mylisting_ajax_mylisting_read_conversation', [ $this, 'read_conversation' ] );
 
         // Delete Conversation
-        add_action( 'mylisting_ajax_mylisting_delete_conversation', [ &$this, 'delete_conversation' ] );
+        add_action( 'mylisting_ajax_mylisting_delete_conversation', [ $this, 'delete_conversation' ] );
 
         // Recipient List
-        add_action( 'mylisting_ajax_mylisting_recipients', [ &$this, 'get_recipients_list' ] );
+        add_action( 'mylisting_ajax_mylisting_recipients', [ $this, 'get_recipients_list' ] );
 
         // Block / Unblock Sender
-        add_action( 'mylisting_ajax_mylisting_block_sender', [ &$this, 'block_sender' ] );
-        // add_action( 'mylisting_ajax_mylisting_unblock_sender', [ &$this, 'unblock_sender' ] );
+        add_action( 'mylisting_ajax_mylisting_block_sender', [ $this, 'block_sender' ] );
+        // add_action( 'mylisting_ajax_mylisting_unblock_sender', [ $this, 'unblock_sender' ] );
 
         // Archive the user display name if the account is deleted
-        add_action('delete_user', [&$this, 'archive_user_display_name']);
+        add_action( 'delete_user', [ $this, 'archive_user_display_name' ] );
 
         // Do not load script files if the user is not logged in
         if ( ! is_user_logged_in() ) {
@@ -199,7 +199,7 @@ class Messages {
         }
 
         // Enqueue Assets
-        add_action('wp_enqueue_scripts', [&$this, 'enqueue_scripts'], 501);
+        add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_scripts' ], 501 );
         add_action( 'mylisting/get-footer', [ $this, 'load_templates' ] );
     }
 
@@ -234,7 +234,7 @@ class Messages {
         // We need atleast one character to search the user
         $search_query = "SELECT a.ID, a.user_nicename, a.display_name, b.meta_value as block_list
                             FROM {$wpdb->users} a LEFT join {$wpdb->usermeta} b
-                            ON a.ID = b.user_id AND b.meta_key = '_ml_user_block_list'";
+                            ON a.ID = b.user_id AND b.meta_key = '_ml_user_block_list' ORDER BY ID DESC";
 
         if ( ! empty( $_POST['term'] ) ) {
             $search_term = $wpdb->esc_like( wp_kses_data( $_POST['term'] ) )  . '%';
@@ -557,27 +557,21 @@ class Messages {
         $suffix = is_rtl() ? '-rtl' : '';
         wp_enqueue_script( 'vuejs' ); // @todo: load conditionally, only after clicking on the messages icon
         wp_enqueue_style( 'mylisting-messages', get_template_directory_uri() . '/assets/dist/messages'.$suffix.'.css', ['mylisting-frontend'], CASE27_THEME_VERSION );
-        wp_enqueue_script( 'mylisting-messages', get_template_directory_uri() . '/assets/dist/messages.js', ['jquery'], CASE27_THEME_VERSION, true );
+        wp_enqueue_script( 'mylisting-messages', get_template_directory_uri() . '/assets/dist/messages.js', ['c27-main'], CASE27_THEME_VERSION, true );
 
         $post_author_data = [];
-        if ( is_single() && is_object( $post ) ) {
-
-            $author_data = get_user_by('ID', $post->post_author);
-            $avatar = '<img data-srcset="'. get_avatar_url( $author_data->ID ) .'"  height="96" width="96" data-src="" class="avatar avatar-96 photo" src="'. get_avatar_url( $author_data->ID ) . '" />';
-
+        if ( is_single() && is_object( $post ) && ( $author_data = get_user_by( 'ID', $post->post_author ) ) ) {
             $post_author_data = [
                 'id'     => $author_data->ID,
                 'login'  => $author_data->user_login,
                 'name'   => wp_specialchars_decode( $author_data->display_name ),
-                'avatar' => $avatar ? : '',
+                'avatar' => get_avatar( $author_data->ID ) ? : '',
                 'uri'    => esc_url( ( new User( $author_data->ID ) )->get_link() ),
                 'blocked'=> $this->_is_user_blocked( get_current_user_id(), $author_data->ID ),
                 'seckey' => wp_create_nonce("block-user-{$author_data->ID}"),
                 'pid'    => $post->ID // Post Id
             ];
         }
-
-        $avatar = '<img data-srcset="'. get_avatar_url( $current_user->ID ) .'"  height="96" width="96" data-src="" class="avatar avatar-96 photo" src="'. get_avatar_url( $current_user->ID ) . '" />';
 
         wp_localize_script('mylisting-messages', 'ml_msg', [
             'sd'        => $this->js_send_delay, // disable send button after each hit
@@ -593,7 +587,7 @@ class Messages {
             'cu' => [
                 'id'    => $current_user->ID,
                 'name'  => wp_specialchars_decode( $current_user->display_name ),
-                'avatar'=> $avatar ? : '',
+                'avatar'=> get_avatar( $current_user->ID ) ?: '',
             ],
             // Post author
             'pod'=> $post_author_data
