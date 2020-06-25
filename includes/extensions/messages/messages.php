@@ -234,7 +234,7 @@ class Messages {
         // We need atleast one character to search the user
         $search_query = "SELECT a.ID, a.user_nicename, a.display_name, b.meta_value as block_list
                             FROM {$wpdb->users} a LEFT join {$wpdb->usermeta} b
-                            ON a.ID = b.user_id AND b.meta_key = '_ml_user_block_list' ORDER BY ID DESC";
+                            ON a.ID = b.user_id AND b.meta_key = '_ml_user_block_list' ORDER BY user_nicename ASC";
 
         if ( ! empty( $_POST['term'] ) ) {
             $search_term = $wpdb->esc_like( wp_kses_data( $_POST['term'] ) )  . '%';
