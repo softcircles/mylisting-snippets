@@ -10,17 +10,18 @@ if ( ! defined('ABSPATH') ) {
 
 // get content and parse bracket syntax
 $content = $listing->compile_string( $block->get_prop('content') );
-	// if ( empty( $content ) ) {
-	// 	return;
-	// }
+if ( empty( $content ) ) {
+	return;
+}
 
 // run shortcodes added by admin
 if ( ! empty( $GLOBALS['wp_embed'] ) ) {
 	$content = $GLOBALS['wp_embed']->run_shortcode( $content );
 }
 $content = do_shortcode( $content );
-if ( empty( $content ) ) {
-	$content = 0;
+
+if ( absint( $content ) ) {
+	$content = number_format_i18n( $content );
 }
 ?>
 
