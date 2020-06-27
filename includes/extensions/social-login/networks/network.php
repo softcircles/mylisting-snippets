@@ -209,11 +209,15 @@ abstract class Network {
 			$redirect = wc_get_page_permalink( 'myaccount' );
 		// }
 
+        if ( ! $redirect ) {
+            $redirect = wc_get_raw_referer();
+        }
+
         // Add unique query arg to avoid cached pages on redirect.
         $redirect = add_query_arg( 't', time(), $redirect );
         $redirect = remove_query_arg( 'wc_error', $redirect );
-
-		return wp_validate_redirect( apply_filters( 'woocommerce_login_redirect', $redirect, wp_get_current_user() ), wc_get_page_permalink( 'myaccount' ) );
+        
+		return wp_validate_redirect(  $redirect );
 	}
 
 	/**
