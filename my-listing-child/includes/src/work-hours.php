@@ -108,7 +108,7 @@ class Work_Hours {
 			}
 
 			if ( $day['status'] == 'by-appointment-only' ) {
-				$this->status = 'closed';
+				$this->status = 'By appointment only';
 				$this->message = __( 'By appointment only', 'my-listing' );
 				return false;
 			}
