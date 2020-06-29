@@ -56,7 +56,7 @@ class Work_Hours {
 			$this->hours[ $weekday ] = [];
 
 			if ( ! empty( $this->raw_hours[ $weekday ] ) && is_array( $this->raw_hours[ $weekday ] ) ) {
-				// $this->hours[ $weekday ] = $this->raw_hours[ $weekday ];
+				$this->hours[ $weekday ] = $this->raw_hours[ $weekday ];
 
 				// Convert from the single-range day format used in earlier versions.
 				if (
@@ -64,9 +64,6 @@ class Work_Hours {
 					isset( $this->raw_hours[ $weekday ]['to'] )
 				) {
 					$this->hours[ $weekday ] = [ $this->raw_hours[ $weekday ] ];
-				} else {
-					$this->raw_hours[ $weekday ] =  [ 'from'	=> '00:15', 'to' => '07:00' ];
-					$this->hours[ $weekday ][] = $this->raw_hours[ $weekday ];
 				}
 			} else {
 				$this->hours[ $weekday ] = [];
@@ -112,7 +109,7 @@ class Work_Hours {
 
 			if ( $day['status'] == 'by-appointment-only' ) {
 				$this->status = 'closed';
-				$this->message = __( 'Closed', 'my-listing' );
+				$this->message = __( 'By appointment only', 'my-listing' );
 				return false;
 			}
 		}
