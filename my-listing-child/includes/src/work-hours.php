@@ -21,15 +21,16 @@ class Work_Hours {
 	public function __construct( $hours ) {
 		$this->raw_hours = $hours;
 		$this->timezone  = date_default_timezone_get();
-		$this->weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+		$this->weekdays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 		$this->weekdays_l10n = [
+			__( 'Sunday', 'my-listing' ),
 			__( 'Monday', 'my-listing' ),
 			__( 'Tuesday', 'my-listing' ),
 			__( 'Wednesday', 'my-listing' ),
 			__( 'Thursday', 'my-listing' ),
 			__( 'Friday', 'my-listing' ),
-			__( 'Saturday', 'my-listing' ),
-			__( 'Sunday', 'my-listing' )
+			__( 'Saturday', 'my-listing' )
+			
 		];
 
 		$this->weekdays_l10n = array_combine( $this->weekdays, $this->weekdays_l10n );
@@ -108,8 +109,8 @@ class Work_Hours {
 			}
 
 			if ( $day['status'] == 'by-appointment-only' ) {
-				$this->status = 'By appointment only';
-				$this->message = __( 'By appointment only', 'my-listing' );
+				$this->status = 'open';
+				$this->message = __( 'Open', 'my-listing' );
 				return false;
 			}
 		}
@@ -206,7 +207,7 @@ class Work_Hours {
 	}
 
 	public function get_open_now() {
-		return in_array( $this->status, [ 'open', 'closing', 'open-all-day' ] );
+		return in_array( $this->status, [ 'open', 'closing', 'open-all-day', 'by-appointment-only' ] );
 	}
 
 	public function get_status() {
@@ -417,13 +418,13 @@ class Work_Hours {
 	public static function parse_short_format( $short_hours ) {
 		$hours = [];
 		$day_map = [
+			'Su' => 'Sunday',
 			'Mo' => 'Monday',
 			'Tu' => 'Tuesday',
 			'We' => 'Wednesday',
 			'Th' => 'Thursday',
 			'Fr' => 'Friday',
 			'Sa' => 'Saturday',
-			'Su' => 'Sunday',
 		];
 
 		if ( ! empty( $short_hours['Tz'] ) ) {
