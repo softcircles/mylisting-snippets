@@ -207,6 +207,7 @@ function compile_string( $string, $require_all_fields, $listing ) {
 		$listing
 	);
 
+	$custom = '';
 	// Get all field values.
 	foreach ( array_unique( $matches['fields'] ) as $slug ) {
 		// $slug can be just the key e.g. [[location]], or the field
@@ -229,7 +230,7 @@ function compile_string( $string, $require_all_fields, $listing ) {
 				$modifier,
 				$listing
 			);
-
+			$custom .= $value;
 			if ( is_array( $value ) ) {
 				$value = join( ', ', $value );
 			}
@@ -246,11 +247,15 @@ function compile_string( $string, $require_all_fields, $listing ) {
 		$value = str_replace( [ "[" , "]" ] , [ "&#91;" , "&#93;" ] , $value );
 
 		if ( ! in_array( $slug, $allow_markup, true ) ) {
-			$value = wp_kses_post( $value );
+			$value = esc_html( $value );
 		}
 
 		// replace the field bracket with it's value
 		$string = str_replace( "[[$slug]]", $value, $string );
+	}
+
+	if ( empty( $custom ) ) {
+		return false;
 	}
 
 	// Preserve line breaks.
