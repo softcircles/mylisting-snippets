@@ -55,7 +55,7 @@ if ( ! defined('ABSPATH') ) {
     </div>
     <div v-else class="form-group explore-filter">
         <label>{{label}}</label>
-        <h5 class="recurring-filter-back" style="display: none;">Back</h5>
+        <a href="#" class="recurring-filter-back" style="display: none;">Back</a>
         <div v-show="presets.length && selected!=='@custom'" class="recurring-filter-selector">
             <select ref="select" required :value="selected" @select:change="setPreset($event.detail.value)">
                 <option v-for="range in presets" :value="range.key">{{range.label}}</option>
