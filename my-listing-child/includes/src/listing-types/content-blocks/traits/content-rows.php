@@ -40,21 +40,22 @@ trait Content_Rows {
 			if ( $escape_html ) {
 				$row_field_value = esc_html( $row_field_value );
 			}
+	
+			if ( $row_field->get_type() === 'date' ) {
+
+				$date = date_create( $row_field_value );
+
+				$english_months = array('January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December');
+			    $french_months = array('Tammikuu', 'Helmikuu', 'Maaliskuu', 'Huhtikuu', 'Toukokuu', 'Kesäkuu', 'Heinäkuu', 'Elokuu', 'Syyskuu', 'Lokakuu', 'Marraskuu', 'Joulukuu');
+
+			    $row_field_value = str_replace( $english_months, $french_months, str_replace( $english_days, $french_days, date_format( $date, 'd F, y' ) ) );
+			}
 
 			// replace the field value into [[field]] placeholder
 		    $row_content = str_replace( '[[field]]', c27()->esc_shortcodes( $row_field_value ), $row['content'] );
 
 		    // run shortcodes added in the listing type editor (not user ones)
 		    $row_content = wpautop( do_shortcode( $row_content ) );
-
-		    if ( $row_field->get_type() === 'location' ) {
-
-		    	if ( apply_filters( 'case27\listing\location\short_address', true ) ) {
-		        	$parts = explode( ',', $row_content );
-		        	array_pop($parts);
-			        $row_content = implode( ",", $parts ) . '</p>';
-		        }
-		    }
 
 		    // insert row
 		    $rows[] = [
@@ -100,7 +101,7 @@ trait Content_Rows {
 							<div class="select-wrapper">
 								<select v-model="row.show_field">
 									<option value="" disabled="disabled">Use Field:</option>
-									<option v-for="field in fieldsByType(['text', 'texteditor', 'wp-editor', 'checkbox', 'radio', 'select', 'multiselect', 'textarea', 'date', 'time', 'datetime',  'email', 'url', 'number', 'location', 'file'])" :value="field.slug">{{ field.label }}</option>
+									<option v-for="field in fieldsByType(['text', ( block.type !== 'table' ? 'texteditor' : '' ), ( block.type !== 'table' ? 'wp-editor' : '' ), 'checkbox', 'radio', 'select', 'multiselect', 'textarea', 'date', 'time', 'datetime',  'email', 'url', 'number', 'location', 'file'])" :value="field.slug">{{ field.label }}</option>
 									<option value="__listing_rating">Rating</option>
 								</select>
 							</div>
