@@ -30,6 +30,11 @@ class File_Upload_Endpoint {
 
 		if ( ! empty( $_FILES ) ) {
 			foreach ( $_FILES as $file_key => $file ) {
+
+				if ( preg_match('/[\[\]\'^£$%&*()}{@#~?><>,|=_+¬-]/', $file['name'] ) ) {
+					$files[] = [ 'error' => 'Attention: Please remove the parenthesis from your file name and upload it again.' ];
+				}
+
 				$files_to_upload = $file_uploader->prepare( $file_key );
 				foreach ( $files_to_upload as $file_to_upload ) {
 					$fieldkey = array_search( $file_to_upload['filekey'], \MyListing\Src\Listing::$aliases ) ?: $file_to_upload['filekey'];
@@ -79,10 +84,10 @@ class File_Upload_Endpoint {
 		}
 
 		// generate attachment
-		// wp_update_attachment_metadata(
-		// 	$attachment_id,
-		// 	wp_generate_attachment_metadata( $attachment_id, $uploaded_file->file )
-		// );
+		wp_update_attachment_metadata(
+			$attachment_id,
+			wp_generate_attachment_metadata( $attachment_id, $uploaded_file->file )
+		);
 
 		// update attachment status to `preview` (not supported by WordPress through wp_insert_attachment)
 		$wpdb->update( $wpdb->posts, [ 'post_status' => 'preview' ], $where = [ 'ID' => $attachment_id ] );
