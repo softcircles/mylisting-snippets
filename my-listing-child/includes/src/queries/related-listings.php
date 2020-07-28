@@ -59,23 +59,5 @@ class Related_Listings extends Query {
 				'fields' => 'ids',
 			] );
 		}
-
-		return $this->send( [
-			'post__in' => ! empty( $related_items ) ? $related_items : [0],
-			'post_status' => 'publish',
-			'posts_per_page' => $per_page,
-			'offset' => $page * $per_page,
-			'orderby' => '',
-			'order' => '',
-			'output' => [ 'item-wrapper' => 'col-md-4 col-sm-6 col-xs-12' ],
-			'fields' => 'ids',
-			'recurring_dates'['job-place-relation'] => [
-				'start' => date('Y-m-d H:i:s', current_time('timestamp') ),
-				'end' => '',
-				'orderby' => true,
-				'order' => 'ASC',
-				'where_clause' => false,
-			],
-		] );
 	}
 }
