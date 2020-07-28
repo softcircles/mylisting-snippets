@@ -115,7 +115,7 @@ if ( is_singular('post') ) {
 							<!-- Cookies Field -->
 							<?php ob_start(); ?>
 							<div class="comment-form-disclaimer-consent md-checkbox">
-								<p class="wp-comment-disclaimer-consent" id="wp-comment-disclaimer-consent"><?php _e( 'All testimonials will be subject to review for authenticity. And text includes minimum 300 characters and Maximum 1500 characters.', 'my-listing' ) ?></p>
+								<p class="wp-comment-disclaimer-consent" id="wp-comment-disclaimer-consent"><?php echo sprintf( 'Security Agreement <a href="%s"></a>', 'https://test.com' ); ?></p>
                             </div>
 							<?php $disclaimer_field = ob_get_clean(); ?>
 
