@@ -29,7 +29,7 @@ class Quick_Search extends Query {
 			'search_keywords' => $search_term,
 			'posts_per_page' => 5,
         	'orderby' => 'relevance',
-            'meta_query' => [
+        	'meta_query' => [
             	[
 	                'key' => '_case27_listing_type',
 	                'value' => '',
