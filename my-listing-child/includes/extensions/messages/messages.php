@@ -875,6 +875,11 @@ class Messages {
      * @since 2.0
      */
     public function setup_options_page() {
+
+        if ( ! function_exists( 'acf_add_options_sub_page' ) ) {
+            return false;
+        }
+        
         acf_add_options_sub_page( [
             'page_title'    => _x( 'Direct Messages', 'Direct Messages page title in WP Admin', 'my-listing' ),
             'menu_title'    => _x( 'Direct Messages', 'Direct Messages menu title in WP Admin', 'my-listing' ),
