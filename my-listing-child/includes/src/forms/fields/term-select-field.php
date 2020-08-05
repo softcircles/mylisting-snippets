@@ -80,7 +80,7 @@ class Term_Select_Field extends Base_Field {
 		}
 
 		$modify = $terms;
-		$parent = ( count( $modify ) == 1 && isset( $modify[0]->parent ) ) ? true : false;
+		$parent = ( count( $modify ) == 1 && ! empty( $modify[0]->parent ) ) ? true : false;
 
 		if ( $parent ) {
 			$modify = $modify[0];
