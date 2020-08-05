@@ -64,7 +64,7 @@ if ( is_singular('post') ) {
 					<div class="element">
 						<div class="pf-head">
 							<div class="title-style-1">
-								<i class="material-icons">chat</i>
+								<i class="mi chat_bubble_outline"></i>
 								<?php if (is_singular('job_listing') && $GLOBALS['case27_reviews_allow_rating']): ?>
 									<h5><?php _e( 'Add a review', 'my-listing' ) ?></h5>
 								<?php else: ?>
@@ -112,14 +112,6 @@ if ( is_singular('post') ) {
                             </div>
 							<?php $cookies_field = ob_get_clean(); ?>
 
-							<!-- Cookies Field -->
-							<?php ob_start(); ?>
-							<div class="comment-form-disclaimer-consent md-checkbox">
-								<p class="wp-comment-disclaimer-consent" id="wp-comment-disclaimer-consent"><?php echo sprintf( 'Security Agreement <a href="%s"></a>', 'https://test.com' ); ?></p>
-                            </div>
-							<?php $disclaimer_field = ob_get_clean(); ?>
-
-
 							<!-- Submit Field -->
 							<?php ob_start(); ?>
 							<button name="submit" type="submit" class="buttons button-2 button-animated">
@@ -149,8 +141,7 @@ if ( is_singular('post') ) {
 									'author'        => $author_field,
 									'email'         => $email_field,
 									'comment_field' => $message_field,
-									'disclaimer'	=> $disclaimer_field,
-									'cookies' 		=> $cookies_field,
+									// 'cookies' 		=> $cookies_field,
 									'submit'        => $submit_field,
 								);
 							} elseif ( $user_review ) {
