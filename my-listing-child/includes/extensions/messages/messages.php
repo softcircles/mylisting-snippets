@@ -818,9 +818,9 @@ class Messages {
                 LIMIT 1
         ", $this->inserted_message_id, $this->sender->ID, $this->receiver->ID, $this->notification_send_delay ) );
 
-        if ( $previous_message === null ) {
+        // if ( $previous_message === null ) {
             do_action( 'mylisting/messages/send-notification', $this );
-        }
+        // }
     }
 
     private function _verify_nonce( $nonce, $action ) {
