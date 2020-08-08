@@ -18,7 +18,9 @@ add_action( 'init', function() {
     if ( ! isset( $_GET['job_expires'] ) ) {
         return;
     }
-
+    
+    global $wpdb;
+    
     $next_data = 50;
     $offset = 0;
     do {
@@ -50,10 +52,9 @@ add_action( 'init', function() {
             printf( '<p style="color: green;">Expiry Date successful for listing #%d </p>', $listing->ID );
 
            delete_post_meta( $listing->ID, '_job_expires' );
-            //update_post_meta( $listing->ID, '_job_expires', date('Y-m-d', strtotime(' + 43 days')) );
-
-            // Change the status of each post to pending
-            $updated = wp_update_post( array( 'ID' => $listing->ID, 'post_status' => 'publish' ) );
+            
+            // Change the status of each post to publish
+            $wpdb->query( $wpdb->prepare("UPDATE $wpdb->posts SET post_status = 'publish' WHERE ID = $listing->ID" ) );
 
             // Check to see if loop is returning posts, and if they were updated
             printf( '<p style="color: green;">Expiry Date successful for listing #%d</p>', $listing->ID );
