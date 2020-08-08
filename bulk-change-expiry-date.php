@@ -16,7 +16,7 @@ add_action( 'init', function() {
             'offset'   => $offset,
             'posts_per_page' => $next_data,
             'fields' => 'ids',
-            'post_status' => ['expired'],
+            'post_status' => ['publish', 'expired', 'pending', 'preview', 'pending_payment'],
         ] );
 
         printf(
