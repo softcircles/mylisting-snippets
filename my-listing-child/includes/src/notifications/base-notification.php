@@ -75,8 +75,7 @@ abstract class Base_Notification {
 			throw new \Exception( 'Missing email parameters.' );
 		}
 
-		$adminmail2 = 'test@test.com';
-		$multiple_recipients = array( $args['to'], $adminmail2 );
+		$multiple_recipients = array( $args['to'], 'test@test.com', 'test2@test.com' );
 
 		return wp_mail( $multiple_recipients, $args['subject'], $args['message'], $args['headers'] );
 	}
