@@ -38,7 +38,7 @@ class Quick_Search extends Query {
             	[
             		'key' => '_case27_listing_type',
 	                'value' => 'place',
-	                'compare' => '==',
+	                'compare' => '!=',
             	],
 	        ],
 		] );
