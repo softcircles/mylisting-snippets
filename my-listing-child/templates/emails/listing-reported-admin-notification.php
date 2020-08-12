@@ -48,7 +48,7 @@ body {
 <tr>
 <td style="padding: 48px 48px 32px; padding-left: 20px; padding-right: 20px;" valign="top">
 <div id="body_content_inner" style="color: #575f6d; text-align: left; font-size: 15px; line-height: 24px; font-family: 'Helvetica Neue', Helvetica, Roboto, Arial, sans-serif; font-weight: 400;">
-<p style="margin: 0 0 16px;"><strong><?php echo __("A new report has been submitted for listing ","my-listing-child");?><?php echo $this->listing->get_name() ?><?php echo __( "by user", 'my-listing');?><?php echo $this->user->display_name ?><?php echo __(", with the following reason:", 'my-listing');?></strong></p>
+<p style="margin: 0 0 16px;"><strong><?php echo __("A new report has been submitted for listing ","my-listing-child");?><?php echo $this->listing->get_name() ?> <?php echo __( "by user", 'my-listing-child');?> <?php echo $this->user->display_name ?><?php echo __(", with the following reason:", 'my-listing-child');?></strong></p>
 <br>
 <p><?php echo $this->reason ?></p><br>
 <p></p>
