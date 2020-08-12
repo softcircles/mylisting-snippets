@@ -53,7 +53,7 @@ class Add_Listing {
 			// mlog( 'Type ID retrieved from given listing: '.$listing->get_id() );
 
 		// if the lsiting id isn't available yet, e.g. in add listing form step handler, then retrieve the listing type from request
-		} elseif ( $listing_type && ( $listing_type_obj = \MyListing\Ext\Listing_Types\Listing_Type::get_by_name( $listing_type ) ) ) {
+		} elseif ( $listing_type && ( $listing_type_obj = \MyListing\Src\Listing_Type::get_by_name( $listing_type ) ) ) {
 			$type = $listing_type_obj;
 			// mlog( 'Type ID retrieved from request.' );
 
@@ -91,7 +91,7 @@ class Add_Listing {
 	 * @since 1.0
 	 */
 	public function choose_package() {
-		if ( empty( $_REQUEST['listing_type'] ) || ! ( $type = \MyListing\Ext\Listing_Types\Listing_Type::get_by_name( $_REQUEST['listing_type'] ) ) ) {
+		if ( empty( $_REQUEST['listing_type'] ) || ! ( $type = \MyListing\Src\Listing_Type::get_by_name( $_REQUEST['listing_type'] ) ) ) {
 			return;
 		}
 
@@ -224,7 +224,7 @@ class Add_Listing {
 		// update status from `preview` to `pending_payment`
 		wp_update_post( [
 			'ID' => $listing->get_id(),
-			'post_status' => 'expired',
+			'post_status' => 'pending_payment',
 			'post_date' => current_time( 'mysql' ),
 			'post_date_gmt' => current_time( 'mysql', 1 ),
 			'post_author' => get_current_user_id(),
@@ -241,8 +241,14 @@ class Add_Listing {
 		// clear cookie
 		wc_setcookie( 'chosen_package_id', '', time() - HOUR_IN_SECONDS );
 
+		// if the user has other items in their cart, redirect to cart page instead
+		// to avoid any accidental purchases
+		$redirect_url = WC()->cart->get_cart_contents_count() > 1
+			? wc_get_cart_url()
+			: wc_get_checkout_url();
+
 		// redirect to checkout page
-		wp_redirect( get_permalink( wc_get_page_id( 'checkout' ) ) );
+		wp_redirect( $redirect_url );
 		exit;
 	}
 
@@ -270,7 +276,7 @@ class Add_Listing {
 	public function order_processed( $listing, $package ) {
 		wp_update_post( [
 			'ID' => $listing->get_id(),
-			'post_status' => mylisting_get_setting( 'submission_requires_approval' ) ? 'pending' : 'publish',
+			'post_status' => 'publish',
 		] );
 
 		$package->assign_to_listing( $listing->get_id() );
