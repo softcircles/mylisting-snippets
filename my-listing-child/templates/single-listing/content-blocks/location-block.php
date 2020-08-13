@@ -31,7 +31,7 @@ if ( $block->get_prop('show_field') === 'job_location' && ( $lat = $listing->get
         'marker_lat' => $lat,
         'marker_lng' => $lng,
         'marker_image' => [ 'url' => $marker_image ],
-        'address'	=> $field->get_value(),
+        'address' => $field->get_value(),
     ];
 }
 
