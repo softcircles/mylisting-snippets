@@ -12,26 +12,22 @@ if ( ! defined( 'ABSPATH' ) ) {
 wp_enqueue_script( 'mylisting-listing-form' );
 wp_enqueue_style( 'mylisting-add-listing' );
 $can_post = is_user_logged_in() || ! mylisting_get_setting( 'submission_requires_account' );
+
+if ( $form == 'edit-listing' ) {
+	$listing = \MyListing\Src\Listing::get( $job_id );
+	$_REQUEST['listing_package'] = $listing->get_product_id();
+}
+
+if ( ! empty( $_REQUEST['job_id'] ) && absint( $_REQUEST['job_id'] ) && $job_id == $_REQUEST['job_id'] && isset( $_REQUEST['action'] ) && 'edit' == $_REQUEST['action'] && empty( $_REQUEST['listing_package'] ) ) {
+	$listing = \MyListing\Src\Listing::get( $job_id );
+	$_REQUEST['listing_package'] = $listing->get_product_id();
+}
 ?>
 
 <div class="i-section">
 	<div class="container">
 		<div class="row section-title">
 			<h2 class="case27-primary-text"><?php _ex( 'Your listing details', 'Add listing form', 'my-listing' ) ?></h2>
-			
-			<?php if ( ! empty( $_REQUEST['listing_type'] ) ) :
-				$listing_type = $_REQUEST['listing_type'];
-
-				$listing_type_text = '';
-
-				if ( $listing_type == 'place' ) {
-					$listing_type_text = 'Place';
-				} elseif ( $listing_type == 'cars' ) {
-					$listing_type_text = 'Cars';
-				}
-             ?>
-                <h2 class="case27-primary-text"><?php echo esc_html( $listing_type_text ); ?></h2>
-            <?php endif; ?>
 		</div>
 		<form action="<?php echo esc_url( $action ); ?>" method="post" id="submit-job-form" class="job-manager-form light-forms c27-submit-listing-form" enctype="multipart/form-data">
 
@@ -59,37 +55,37 @@ $can_post = is_user_logged_in() || ! mylisting_get_setting( 'submission_requires
 
 						<?php foreach ( $fields as $key => $field ) : ?>
 
-						<?php if ( $field['type'] == 'form-heading' ): ?>
+						<?php if ( $field->get_type() === 'form-heading' ): ?>
 						</div></div></div>
 						<div class="form-section-wrapper" id="form-section-<?php echo esc_attr( ! empty( $key ) ? $key : \MyListing\Utils\Random_Id::generate(7) ) ?>">
 							<div class="element form-section">
-							<?php if ( ! empty( $field['icon'] ) && ! empty( $field['label'] ) ): ?>
+							<?php if ( ( $icon = $field->get_prop('icon') ) && ( $label = $field->get_label() ) ): ?>
 								<div class="pf-head round-icon">
 									<div class="title-style-1">
-										<i class="<?php echo esc_attr( $field['icon'] ) ?>"></i>
-										<h5><?php echo esc_html( $field['label'] ) ?></h5>
+										<i class="<?php echo esc_attr( $icon ) ?>"></i>
+										<h5><?php echo esc_html( $label ) ?></h5>
 									</div>
 								</div>
 							<?php endif ?>
 							<div class="pf-body">
 							<?php else:
 								$classes = [];
-								if ( $field['type'] === 'term-select' ) {
-									$classes[] = 'term-type-'.$field['terms-template'];
+								if ( $field->get_type() === 'term-select' ) {
+									$classes[] = 'term-type-'.$field->get_prop('terms-template');
 								}
 								?>
-								<div class="fieldset-<?php echo esc_attr( $key ) ?> <?php echo esc_attr( 'field-type-'.$field['type'] ) ?> form-group <?php echo join( ' ', array_map( 'esc_attr', $classes ) ) ?>">
+								<div class="fieldset-<?php echo esc_attr( $key ) ?> <?php echo esc_attr( 'field-type-'.$field->get_type() ) ?> form-group <?php echo join( ' ', array_map( 'esc_attr', $classes ) ) ?>">
 									<div class="field-head">
 										<label for="<?php echo esc_attr( $key ) ?>">
-											<?php echo $field['label'] ?>
-											<?php echo $field['required'] ? '' : ' <small>' . _x( '(optional)', 'Add listing form', 'my-listing' ) . '</small>' ?>
+											<?php echo $field->get_label() ?>
+											<?php echo $field->is_required() ? '' : ' <small>' . _x( '(optional)', 'Add listing form', 'my-listing' ) . '</small>' ?>
 										</label>
-										<?php if ( ! empty( $field['description'] ) ): ?>
-											<small class="description"><?php echo $field['description'] ?></small>
+										<?php if ( ! empty( $field->get_description() ) ): ?>
+											<small class="description"><?php echo $field->get_description() ?></small>
 										<?php endif ?>
 									</div>
-									<div class="field <?php echo $field['required'] ? 'required-field' : ''; ?>">
-										<?php mylisting_locate_template( 'templates/add-listing/form-fields/'.$field['type'].'-field.php', [ 'key' => $key, 'field' => $field ] ); ?>
+									<div class="field <?php echo $field->is_required() ? 'required-field' : ''; ?>">
+										<?php mylisting_locate_template( 'templates/add-listing/form-fields/'.$field->get_type().'-field.php', [ 'key' => $key, 'field' => $field ] ); ?>
 									</div>
 								</div>
 							<?php endif ?>
