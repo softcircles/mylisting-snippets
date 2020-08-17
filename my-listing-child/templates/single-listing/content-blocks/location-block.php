@@ -59,7 +59,13 @@ $mapargs = [
 				<div class="c27-map-listings hide"></div>
 			</div>
 			<div class="map-block-address">
-				<p><?php echo esc_html( $field->get_value() ) ?></p>
+				<p><?php
+				$parts = explode( ',', $field->get_value() );
+			    if ( isset( $parts[1] ) ) {
+			    	$parts[0] .= ', '.$parts[1];
+			    }
+			    
+				echo esc_html( $parts[0] ) ?></p>
 				<?php if ( ! empty( $mapargs['locations'] )  ): ?>
 					<?php do_action( 'mylisting/sections/map-block/actions', $mapargs['locations'][0] ) ?>
 				<?php endif ?>
