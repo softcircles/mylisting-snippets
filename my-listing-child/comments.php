@@ -139,7 +139,6 @@ if ( is_singular('post') ) {
 									'rating_field'  => $rating_field,
 									'gallery_field' => $gallery_field,
 									'comment_field' => $message_field,
-									'cookies' 		=> $cookies_field,
 									'submit'        => $submit_field,
 								);
 							} elseif ( $user_review ) {
