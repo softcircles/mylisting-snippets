@@ -35,7 +35,7 @@
 <script type="text/javascript">
 	// prevent form resubmission
 	//window.setTimeout(function() {
-	    window.location.href = "https://borasurfar.pt/thank-you/";
+	    window.location.href = "https://yourwebsite.com/thank-you/";
 	//}, 5000);
 
 	if ( window.history.replaceState ) {
