@@ -125,11 +125,18 @@ if ( is_singular('post') ) {
 
 							<?php
 							$args = array(
-								'comment_field'       => $rating_field . $gallery_field . $message_field . $submit_field,
+								'comment_field'       => $rating_field . $gallery_field . $submit_field,
 								'class_submit'        => 'hide',
 								'cancel_reply_before' => ' &middot; <span>',
 								'cancel_reply_after'  => '</span>',
 							);
+
+							// $args = array(
+							// 	'comment_field'       => $rating_field . $gallery_field . $message_field . $submit_field,
+							// 	'class_submit'        => 'hide',
+							// 	'cancel_reply_before' => ' &middot; <span>',
+							// 	'cancel_reply_after'  => '</span>',
+							// );
 
 							$user_review = MyListing\Ext\Reviews\Reviews::has_user_reviewed( get_current_user_id(), get_the_ID() );
 
@@ -138,11 +145,13 @@ if ( is_singular('post') ) {
 								$args['fields'] = array(
 									'rating_field'  => $rating_field,
 									'gallery_field' => $gallery_field,
-									'comment_field' => $message_field,
+									'author'        => $author_field,
+									'email'         => $email_field,
+									'cookies' 		=> $cookies_field,
 									'submit'        => $submit_field,
 								);
 							} elseif ( $user_review ) {
-								$args['comment_field'] = $message_field . $submit_field;
+								$args['comment_field'] = $submit_field;
 							}
 							?>
 
@@ -159,7 +168,7 @@ if ( is_singular('post') ) {
 											<?php echo MyListing\Ext\Reviews\Reviews::get_gallery_field( $user_review, get_the_ID() ); ?>
 											<div class="form-group">
 												<label><?php _e( 'Your Message', 'my-listing' ) ?></label>
-												<textarea rows="5" name="comment" required="required" placeholder="<?php echo esc_html__('Enter message...', 'my-listing') ?>"><?php echo get_comment_text( $user_review ) ?></textarea>
+												<textarea rows="5" name="comment" placeholder="<?php echo esc_html__('Enter message...', 'my-listing') ?>"><?php echo get_comment_text( $user_review ) ?></textarea>
 											</div>
 											<input type="hidden" name="action" value="update_review">
 											<input type="hidden" name="listing_id" value="<?php echo esc_attr( get_the_ID() ) ?>">
