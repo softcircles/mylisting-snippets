@@ -23,8 +23,8 @@ class Add_Listing_Form extends Base_Form {
 	public function __construct() {
 		add_action( 'wp', array( $this, 'process' ) );
 		if ( $this->use_recaptcha_field() ) {
-			add_action( 'mylisting/add-listing/form-fields/end', [ $this, 'display_recaptcha_field' ] );
-			add_action( 'mylisting/submission/validate-fields', [ $this, 'validate_recaptcha_field' ] );
+			add_action( 'mylisting/add-listing/form-fields/end', '\MyListing\display_recaptcha' );
+			add_action( 'mylisting/submission/validate-fields', '\MyListing\validate_recaptcha' );
 		}
 
 		// "skip preview" functionality
@@ -211,6 +211,13 @@ class Add_Listing_Form extends Base_Form {
 			return;
 		}
 
+		// in case listing package was passed directly in the url with the
+		// `skip_selection` arg, then it can't initially be stored in cookies due
+		// to header_sent error; so we do that in the very next step available
+		if ( ! empty( $_REQUEST['listing_package'] ) ) {
+			wc_setcookie( 'chosen_package_id', absint( $_REQUEST['listing_package'] ) );
+		}
+
 		// get the listing type
 		if ( ! empty( $this->job_id ) ) {
 			$listing = \MyListing\Src\Listing::get( $this->job_id );
@@ -251,6 +258,10 @@ class Add_Listing_Form extends Base_Form {
 			if ( mylisting_get_setting( 'submission_requires_account' ) && ! is_user_logged_in() ) {
 				throw new \Exception( _x( 'You must be signed in to post a new listing.', 'Add listing form', 'my-listing' ) );
 			}
+
+			if ( is_user_logged_in() && ! \MyListing\Src\User_Roles\user_can_add_listings() ) {
+				throw new \Exception( __( 'You cannot add or edit listings.', 'my-listing' ) );
+			}
 		} catch ( \Exception $e ) {
 			$this->add_error( $e->getMessage() );
 			return;
@@ -290,13 +301,13 @@ class Add_Listing_Form extends Base_Form {
 	 * @since 2.1
 	 */
 	protected function save_listing( $post_title, $post_content, $status = 'preview' ) {
-		
 		if ( $this->job_id ) {
 			$data = [
 				'post_content' => $post_content,
 				'post_type' => 'job_listing',
 				'comment_status' => 'open',
 			];
+
 		} else {
 			$data = [
 				'post_title' => $post_title,
@@ -461,4 +472,5 @@ class Add_Listing_Form extends Base_Form {
 			delete_post_meta( $listing->get_id(), '_job_expires' );
 		}
 	}
+
 }
