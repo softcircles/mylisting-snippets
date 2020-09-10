@@ -10,17 +10,17 @@ if ( ! defined('ABSPATH') ) {
 
 $rows = $block->get_formatted_rows( $listing );
 if ( empty( $rows ) ) {
-	return;
+    return;
 }
 ?>
 
 <div class="<?php echo esc_attr( $block->get_wrapper_classes() ) ?>" id="<?php echo esc_attr( $block->get_wrapper_id() ) ?>">
     <div class="element">
         <div class="pf-head">
-			<div class="title-style-1">
-				<i class="<?php echo esc_attr( $block->get_icon() ) ?>"></i>
-				<h5><?php echo esc_html( $block->get_title() ) ?></h5>
-			</div>
+            <div class="title-style-1">
+                <i class="<?php echo esc_attr( $block->get_icon() ) ?>"></i>
+                <h5><?php echo esc_html( $block->get_title() ) ?></h5>
+            </div>
         </div>
         <div class="pf-body">
             <ul class="">
@@ -34,13 +34,13 @@ if ( empty( $rows ) ) {
                                         role="button"
                                         data-toggle="collapse"
                                         data-parent=".<?php echo esc_attr( $block->get_unique_id().'-accordion' ) ?>"
-                                        aria-expanded="<?php echo $key === 0 ? 'true' : 'false' ?>"
+                                        aria-expanded="true"
                                         aria-controls="<?php echo esc_attr( $block->get_unique_id().$key ) ?>"
                                         data-target="#<?php echo esc_attr( $block->get_unique_id().$key ) ?>"
                                     ><?php echo esc_html( $row['title'] ) ?></a>
                                 </h4>
                             </div>
-                            <div id="<?php echo esc_attr( $block->get_unique_id().$key ) ?>" class="panel-collapse collapse <?php echo $key === 0 ? 'in' : '' ?>" role="tabpanel">
+                            <div id="<?php echo esc_attr( $block->get_unique_id().$key ) ?>" class="panel-collapse collapse in" role="tabpanel">
                                 <div class="panel-body wp-editor-content">
                                     <p><?php echo $row['content'] ?></p>
                                 </div>
