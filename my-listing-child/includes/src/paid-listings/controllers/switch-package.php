@@ -80,10 +80,18 @@ class Switch_Package {
 				<div class="row section-title">
 					<h2 class="case27-primary-text">
 						<?php echo $title ?>
-						
+						<?php printf( ' "<a href="%s" target="_blank">%s</a>"', esc_url( $listing->get_link() ), $listing->get_name() ) ?>
 					</h2>
 
-					
+					<?php if ( ( $current_package = $listing->get_package() ) && ( $current_product = $current_package->get_product() ) ): ?>
+						<?php printf(
+							'%s <a href="%s" title="%s" target="_blank">%s</a>.',
+							$description,
+							esc_url( $current_product->get_permalink() ),
+							esc_attr( sprintf( _x( 'Package #%d', 'Switch Package', 'my-listing' ), $current_package->get_id() ) ),
+							$current_product->get_title()
+						) ?>
+					<?php endif ?>
 				</div>
 				<form method="post" id="job_package_selection">
 					<div class="job_listing_packages">
@@ -114,7 +122,7 @@ class Switch_Package {
 				throw new \Exception( _x( 'Invalid request.', 'Switch package', 'my-listing' ) );
 			}
 
-			if ( empty( $_POST['listing_package'] ) || empty( $_GET['listing'] ) ) {
+			if ( empty( $_REQUEST['listing_package'] ) || empty( $_GET['listing'] ) ) {
 				throw new \Exception( _x( 'Invalid request.', 'Switch package', 'my-listing' ) );
 			}
 
@@ -125,12 +133,12 @@ class Switch_Package {
 				throw new \Exception( _x( 'Something went wrong.', 'Switch package', 'my-listing' ) );
 			}
 
-			if ( ! \MyListing\Src\Paid_Listings\Util::validate_package( $_POST['listing_package'], $listing->type->get_slug() ) ) {
+			if ( ! \MyListing\Src\Paid_Listings\Util::validate_package( $_REQUEST['listing_package'], $listing->type->get_slug() ) ) {
 				throw new \Exception( _x( 'Chosen package is not valid.', 'Switch package', 'my-listing' ) );
 			}
 
 			// Package is valid.
-			$package = get_post( $_POST['listing_package'] );
+			$package = get_post( $_REQUEST['listing_package'] );
 
 			/**
 			 * If the user used a payment package to switch listing, assign the package and publish the listing.
@@ -298,7 +306,7 @@ class Switch_Package {
 	public function order_processed( $listing, $package ) {
 		wp_update_post( [
 			'ID' => $listing->get_id(),
-			'post_status' => 'publish',
+			'post_status' => 'pending',
 		] );
 
 		$package->assign_to_listing( $listing->get_id() );
@@ -311,6 +319,10 @@ class Switch_Package {
 	 * @since 2.1.6
 	 */
 	public function use_available_package( $listing, $package ) {
+		if ( ! $package->belongs_to_current_user() ) {
+			throw new \Exception( _x( 'Couldn\'t process package.', 'Listing submission', 'my-listing' ) );
+		}
+
 		wp_update_post( [
 			'ID' => $listing->get_id(),
 			'post_status' => 'publish',
