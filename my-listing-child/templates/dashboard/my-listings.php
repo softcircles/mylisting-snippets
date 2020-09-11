@@ -8,27 +8,23 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+if ( ! \MyListing\Src\User_Roles\user_can_add_listings() ) {
+	printf(
+		'<div class="element col-sm-6 text-center col-sm-offset-3">%s</div>',
+		__( 'You cannot access this page.' )
+	);
+	return;
+}
+
 $endpoint = wc_get_account_endpoint_url( 'my-listings' );
-
-$label = c27()->get_setting( 'header_call_to_action_label' );
-$links_to = c27()->get_setting( 'header_call_to_action_links_to' );
-
 ?>
 
 <?php do_action( 'mylisting/user-listings/before' ) ?>
 
 <div class="row my-listings-tab-con">
-	<div class="col-md-6 mlduo-welcome-message">
+	<div class="col-md-9 mlduo-welcome-message">
 		<h1><?php _ex( 'Your listings', 'Dashboard welcome message', 'my-listing' ) ?></h1>
 	</div>
-
-	<?php if ( $label && $links_to ) : ?>
-		<div class="col-md-3">
-			<a href="<?php echo esc_url( $links_to ) ?>" class="buttons button-2">
-				<?php echo do_shortcode( $label ) ?>
-			</a>
-		</div>
-	<?php endif; ?>
 	<div class="col-md-3">
 		<select class="custom-select filter-listings-select" required="required" onchange="window.location.href=this.value;">
 			<option value="<?php echo esc_url( $endpoint ) ?>" <?php selected( $active_status === 'all' ) ?>>
@@ -48,9 +44,6 @@ $links_to = c27()->get_setting( 'header_call_to_action_links_to' );
 			</option>
 
 			<optgroup>
-				<option value="<?php echo esc_url( add_query_arg( 'status', 'pending_payment', $endpoint ) ) ?>" <?php selected( $active_status === 'pending_payment' ) ?>>
-					<?php _ex( 'Pending Payment', 'User dashboard', 'my-listing' ) ?>
-				</option>
 
 				<option value="<?php echo esc_url( add_query_arg( 'status', 'preview', $endpoint ) ) ?>" <?php selected( $active_status === 'preview' ) ?>>
 					<?php _ex( 'Preview', 'User dashboard', 'my-listing' ) ?>
@@ -93,14 +86,6 @@ $links_to = c27()->get_setting( 'header_call_to_action_links_to' );
 		'value' => number_format_i18n( absint( $stats->get( 'listings.pending_approval' ) ) ),
 		'description' => _x( 'Pending Approval', 'Dashboard stats', 'my-listing' ),
 		'background' => mylisting()->get( 'stats.color2' ),
-	] );
-
-	// Promoted listing count.
-	mylisting_locate_template( 'templates/dashboard/stats/card.php', [
-		'icon' => 'mi info_outline',
-		'value' => number_format_i18n( absint( $stats->get( 'listings.pending_payment' ) ) ),
-		'description' => _x( 'Pending Payment', 'Dashboard stats', 'my-listing' ),
-		'background' => mylisting()->get( 'stats.color3' ),
 	] );
 
 	// Recent views card.
