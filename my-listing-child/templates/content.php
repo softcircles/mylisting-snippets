@@ -1,102 +1,100 @@
-<?php global $page, $numpages;
-$image = c27()->featured_image(get_the_ID(), 'full');
-$categories = c27()->get_terms(get_the_ID(), 'category');
+<?php
+/**
+ * Single blog post template.
+ *
+ * @since 1.0
+ */
 
-$default_image = '';
-?>
+global $page, $numpages;
 
-<section class="featured-section profile-cover parallax-bg <?php echo !$default_image ? 'profile-cover-no-bg' : '' ?>" style="background-image: url('<?php echo esc_url( $default_image ) ?>')" data-bg="<?php echo esc_url( $default_image ) ?>">
-	<div class="overlay"></div>
-	<div class="profile-cover-content">
-		<div class="container">
-			<div class="cover-buttons">
-				<ul>
+$thumbnail_id = get_post_thumbnail_id( get_the_ID() );
+$thumbnail = wp_get_attachment_image_src( $thumbnail_id, 'large' );
+$image = $thumbnail ? array_shift( $thumbnail ) : false;
+$image_alt = get_post_meta( $thumbnail_id, '_wp_attachment_image_alt', true );
 
-					<?php foreach ( (array) $categories as $category ): ?>
-						<a href="<?php echo esc_url( $category['link'] ) ?>">
+$categories = c27()->get_terms( get_the_ID(), 'category' ); ?>
+
+<section class="i-section blogpost-section">
+	<div class="container">
+		<div class="row blog-title">
+			<div class="col-md-8 col-md-offset-2">
+				<?php if (function_exists ('yoast_breadcrumb')) yoast_breadcrumb ('<p id="breadcrumbs">','</p>'); ?>
+				<h1 class="case27-primary-text"><?php the_title() ?></h1>
+					<div class="post-cover-buttons">
+						<ul>
+							<?php foreach ( (array) $categories as $category ): ?>
+								<li>
+									<a href="<?php echo esc_url( $category['link'] ) ?>">
+										<i class="mi bookmark"></i>
+										<?php echo esc_html( $category['name'] ) ?>
+									</a>
+								</li>
+							<?php endforeach ?>
+
 							<li>
-								<div class="buttons button-outlined medium">
-									<i class="mi bookmark_border"></i>
-									<?php echo esc_html( $category['name'] ) ?>
+								<div>
+									<i class="fa fa-calendar"></i>
+									<span class="e-month-sp"><?php echo get_the_date('M') ?></span>
+									<span class="e-day-sp"><?php echo get_the_date('d') ?></span>
 								</div>
 							</li>
-						</a>
-					<?php endforeach ?>
 
-					<li>
-						<div class="event-date inside-date button-secondary">
-							<span class="e-month"><?php echo get_the_date('M') ?></span>
-							<span class="e-day"><?php echo get_the_date('d') ?></span>
-						</div>
-					</li>
+							<li class="dropdown">
+								<?php $links = mylisting()->sharer()->get_links([
+									'permalink' => get_permalink(),
+									'image' => $image,
+									'title' => get_the_title(),
+									'description' => get_the_content(),
+									] ) ?>
+									<a href="#" data-toggle="modal" data-target="#social-share-modal">
+										<i class="fa fa-share-alt"></i>
+										<?php _e( 'Share post', 'my-listing' ) ?>
+									</a>
 
-					<li class="dropdown">
-						<?php $links = mylisting()->sharer()->get_links([
-							'permalink' => get_permalink(),
-							'image' => $image,
-							'title' => get_the_title(),
-							'description' => get_the_content(),
-						] ) ?>
-						<a href="#" class="buttons button-outlined icon-only medium" data-toggle="modal" data-target="#social-share-modal">
-						   <i class="mi share"></i>
-						</a>
-
-						<?php
-						/**
-						 * Output the markup for the share modal in the site footer,
-						 * to prevent layout issues/cutout modal.
-						 */
-						add_action( 'mylisting/get-footer', function() use ( $links ) { ?>
-						    <div id="social-share-modal" class="modal modal-27">
-						        <ul class="share-options">
-						            <?php foreach ( $links as $link ):
-						                if ( empty( trim( $link ) ) ) continue; ?>
-						                <li><?php mylisting()->sharer()->print_link( $link ) ?></li>
-						            <?php endforeach ?>
-						        </ul>
-						    </div>
-						<?php } ) ?>
-
-						<ul class="i-dropdown share-options dropdown-menu" aria-labelledby="share-links">
-							<?php foreach ($links as $link): ?>
-								<li><?php mylisting()->sharer()->print_link( $link ) ?></li>
-							<?php endforeach ?>
-						</ul>
-					</li>
-				</ul>
-			</div>
-		</div>
-	</div>
-</section>
-
-<section class="i-section blogpost-section" style="background:#fff;">
-	<div class="container">
-		<?php if ( has_post_thumbnail() ) : ?>
-			<div class="row blog-title">
-				<div class="col-md-12">
-					<?php the_post_thumbnail( 'full' ); ?>
+									<?php
+							/**
+							 * Output the markup for the share modal in the site footer,
+							 * to prevent layout issues/cutout modal.
+							 */
+							add_action( 'mylisting/get-footer', function() use ( $links ) { ?>
+								<div id="social-share-modal" class="social-share-modal modal modal-27">
+									<ul class="share-options">
+										<?php foreach ( $links as $link ):
+										if ( empty( trim( $link ) ) ) continue; ?>
+										<li><?php mylisting()->sharer()->print_link( $link ) ?></li>
+									<?php endforeach ?>
+								</ul>
+							</div>
+							<?php } ) ?>
+						</li>
+					</ul>
 				</div>
 			</div>
-		<?php endif; ?>
-		<div class="row blog-title">
-			<div class="col-md-12">
-				<h1 class="case27-primary-text"><?php the_title() ?></h1>
-			</div>
 		</div>
+		<?php if ( ! empty( $image ) ): ?>
+			<div class="row blog-featured-image">
+				<div class="col-md-12">
+					<img src="<?php echo esc_url( $image ) ?>" alt="<?php echo esc_attr( $image_alt ) ?>">
+				</div>
+			</div>
+		<?php endif ?>
+
 		<div class="row section-body">
-			<div class="col-md-12 c27-content-wrapper">
+			<div class="col-md-8 col-md-offset-2 c27-content-wrapper">
 				<?php the_content() ?>
 			</div>
 		</div>
-		<div class="row tags-list">
-			<div class="col-md-12">
-				<ul class="tags">
-					<li><?php the_tags('', '<li>', '') ?></li>
-				</ul>
+		<?php if ( ! empty( get_the_tags() ) ): ?>
+			<div class="row tags-list">
+				<div class="col-md-8 col-md-offset-2">
+					<ul class="tags">
+						<li><?php the_tags('', '<li>', '') ?></li>
+					</ul>
+				</div>
 			</div>
-		</div>
+		<?php endif ?>
 
-		<?php if ($numpages > 1): ?>
+		<?php if ( $numpages > 1 ): ?>
 			<div class="row c27-post-pages">
 				<?php if ($page == 1): ?>
 					<div class="col-md-6 text-left"></div>
@@ -132,8 +130,6 @@ $default_image = '';
 				<?php next_post_link('%link', esc_html__('Next Post', 'my-listing')) ?>
 			</div>
 		</div>
-
-		<div><?php the_author(); ?></div>
 	</div>
 </section>
 
@@ -148,3 +144,5 @@ $default_image = '';
 		<?php comments_template() ?>
 	</section>
 <?php endif ?>
+
+
