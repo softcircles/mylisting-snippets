@@ -31,7 +31,7 @@ trait Content_Rows {
 		    if ( is_array( $row_field_value ) ) {
 		        $row_field_value = join( ', ', $row_field_value );
 		    }
-
+			
 			/**
 			 * Escape html output, unless it's a wp-editor field or a texteditor field with mode set
 			 * to wp-editor. These require HTML markup for rendering, so shouldn't be escaped.
@@ -40,22 +40,17 @@ trait Content_Rows {
 			if ( $escape_html ) {
 				$row_field_value = esc_html( $row_field_value );
 			}
-	
-			if ( $row_field->get_type() === 'date' ) {
-
-				$date = date_create( $row_field_value );
-
-				$english_months = array('January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December');
-			    $french_months = array('Tammikuu', 'Helmikuu', 'Maaliskuu', 'Huhtikuu', 'Toukokuu', 'Kesäkuu', 'Heinäkuu', 'Elokuu', 'Syyskuu', 'Lokakuu', 'Marraskuu', 'Joulukuu');
-
-			    $row_field_value = str_replace( $english_months, $french_months, str_replace( $english_days, $french_days, date_format( $date, 'd F, y' ) ) );
-			}
 
 			// replace the field value into [[field]] placeholder
 		    $row_content = str_replace( '[[field]]', c27()->esc_shortcodes( $row_field_value ), $row['content'] );
-
-		    // run shortcodes added in the listing type editor (not user ones)
-		    $row_content = wpautop( do_shortcode( $row_content ) );
+			//print_r( $row_content );
+			// print_r( $row_field_value );
+			if ( $row_field->get_key() == 'asking-price' ) {
+				$row_content = '£' . number_format_i18n( do_shortcode( $row_field_value ) );
+			} else {
+			    // run shortcodes added in the listing type editor (not user ones)
+			    $row_content = wpautop( do_shortcode( $row_content ) );
+			}
 
 		    // insert row
 		    $rows[] = [
