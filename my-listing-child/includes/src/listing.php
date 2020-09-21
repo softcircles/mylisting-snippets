@@ -470,7 +470,7 @@ class Listing {
 			':lat'             => $this->get_data('geolocation_lat'),
 			':lng'             => $this->get_data('geolocation_long'),
 			':date'            => date_i18n( get_option( 'date_format' ), strtotime( $this->get_data('post_date') ) ),
-			':rawdate'         => get_the_date( get_option( 'date_format' ), $this->get_id() ),
+			':rawdate'         => sprintf( esc_html__( '%s trước', 'textdomain' ), human_time_diff(get_the_time ( 'U', $this->get_id() ), current_time( 'timestamp' ) ) ),
 			':last-modified'   => get_the_modified_date( '', $this->get_id() ),
 			':authid'          => $this->get_data('post_author'),
 			':authname'        => get_the_author_meta( 'display_name', $this->get_data('post_author') ),
