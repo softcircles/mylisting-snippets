@@ -118,9 +118,9 @@ class Listing_Feed extends \Elementor\Widget_Base {
 			'description' => __( 'Leave blank to include all priority levels', 'my-listing' ),
 			'type' => \Elementor\Controls_Manager::SELECT2,
 			'options' => [
-				'normal' => 'Normal',
 				'featured' => 'Featured',
 				'promoted' => 'Promoted',
+				'normal' => 'Normal',
 				'custom' => 'Custom',
 			],
 			'multiple' => true,
@@ -278,12 +278,7 @@ class Listing_Feed extends \Elementor\Widget_Base {
 		}
 
 		if ( empty( $listing_ids ) ) {
-			echo '<div class="row section-body grid no-content">';
-	        echo '<div class="col-md-12 text-center">';
-	        echo '<h3>'. esc_html__( 'This section currently has no listings', 'my-listing' ).'</h3>';
-	        echo '</div>';
-	        echo '</div>';
-	        return;
+			return;
 		}
 
 		$template = $this->get_settings('the_template');
@@ -463,13 +458,13 @@ class Listing_Feed extends \Elementor\Widget_Base {
 		$order_by_priority = (bool) $this->get_settings( 'behavior' );
 		if ( $order_by_priority === true ) {
 			$args['suppress_filters'] = false;
-			add_filter( 'posts_orderby', [ $explore_query, 'priority_field_orderby' ], 30, 2 );
+			add_filter( 'posts_orderby', [ $explore_query, 'priority_field_orderby' ], 35, 2 );
 		}
 
 		$query = new \WP_Query( apply_filters( 'mylisting/sections/listing-feed/args', $args ) );
 
 		remove_filter( 'posts_join', [ $explore_query, 'priority_field_join' ], 30 );
-		remove_filter( 'posts_orderby', [ $explore_query, 'priority_field_orderby' ], 30 );
+		remove_filter( 'posts_orderby', [ $explore_query, 'priority_field_orderby' ], 35 );
 		remove_filter( 'posts_where', $priority_field_where, 30 );
 		remove_filter( 'posts_join', [ $explore_query, 'rating_field_join' ], 35 );
 		remove_filter( 'posts_orderby', [ $explore_query, 'rating_field_orderby' ], 35 );
