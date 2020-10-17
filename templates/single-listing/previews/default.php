@@ -21,10 +21,12 @@
 
         <?php if ($options['background']['type'] == 'image' && ( $cover = $listing->get_cover_image( $bg_size ) ) ): ?>
             <div class="lf-background" style="background-image: url('<?php echo esc_url( $cover ) ?>');"></div>
+        <?php elseif ( $cover = $listing->get_field('gallery') ) : ?>
+            <div class="lf-background" style="background-image: url('<?php echo esc_url( $cover[0] ) ?>');"></div>
         <?php endif ?>
 
         <div class="lf-item-info">
-            <?php if ( $logo = ( get_avatar_url( $listing->get_author() ) ? : $listing->get_logo('medium') ) ): ?>
+            <?php if ( $logo = $listing->get_logo() ): ?>
                 <div class="lf-avatar" style="background-image: url('<?php echo esc_url( $logo ) ?>')"></div>
             <?php endif ?>
 
