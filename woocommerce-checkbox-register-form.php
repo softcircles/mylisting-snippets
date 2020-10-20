@@ -5,14 +5,11 @@ add_action('woocommerce_register_form', 'woocommerce_register_form' );
 
 function woocommerce_register_form() { ?>
 
-    <div class="form-row form-row-wide">
-        <p>
-            <label class="woocommerce-form__label woocommerce-form__label-for-checkbox checkbox">
-                <input type="checkbox" class="woocommerce-form__input woocommerce-form__input-checkbox input-checkbox" style="margin-left: 0; top: 6px;" name="subscribe" <?php checked( apply_filters( 'woocommerce_subscribe_is_checked_default', isset( $_POST['subscribe'] ) ), true ); ?> id="subscribe" />
-                <span style="margin-left: 20px;">Some Text</span>
-            </label>
-            <input type="hidden" name="subscribe-field" value="1" />
-        </p>
+    <div class="terms-and-conditions">
+        <div class="md-checkbox">
+            <input id="subscribe" name="subscribe" type="checkbox" value="yes">
+            <label for="subscribe">I have read and agree to the website <a href="#" class="woocommerce-terms-and-conditions-link" target="_blank">terms and conditions</a></label>
+        </div>
     </div>
 
     <?php
