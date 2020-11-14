@@ -81,7 +81,7 @@ class Single_Listing_Screen {
 		} );
 
 		// allow modifiying fields through filters
-		// $fields = apply_filters( 'mylisting/admin/submission/fields', $fields, $listing );
+		$fields = apply_filters( 'mylisting/admin/submission/fields', $fields, $listing );
 
 		// unset the title field on backend, to make use of the post title input in wp backend
 		if ( isset( $fields['job_title'] ) ) {
@@ -111,20 +111,19 @@ class Single_Listing_Screen {
 	 */
 	public function save_listing_fields( $post_id, $listing ) {
 		foreach ( $this->get_listing_fields() as $key => $field ) {
-			// update
-			$field->update();
+			// description requires special handling to avoid triggering an
+			// infinite loop of 'save_post' hook calls
+			if ( $field->get_key() === 'job_description' ) {
+				remove_action( 'save_post', [ $this, 'save_post' ], 1 );
+				wp_update_post( [
+					'ID' => $post_id,
+					'post_content' => $field->get_posted_value(),
+				] );
+				add_action( 'save_post', [ $this, 'save_post' ], 1, 2 );
+			} else {
+				$field->update();
+			}
 		}
-
-		// set title
-		update_post_meta( $post_id, '_job_title', $listing->get_name() );
-
-		// update post description to have the same value as 'job_description'
-		remove_action( 'save_post', [ $this, 'save_post' ], 1 );
-		wp_update_post( [
-			'ID' => $post_id,
-			'post_content' => get_post_meta( $post_id, '_job_description', true ),
-		] );
-		add_action( 'save_post', [ $this, 'save_post' ], 1, 2 );
 	}
 
 	/**
@@ -274,14 +273,19 @@ class Single_Listing_Screen {
 	 * @since 1.7.0
 	 */
 	public function display_listing_fields() {
-		add_meta_box(
-			'job_listing_data',
-			_x( 'Listing data', 'Listing fields metabox title', 'my-listing' ),
-			[ $this, 'fields_metabox_content' ],
-			'job_listing',
-			'normal',
-			'high'
-		);
+		global $current_user;
+	    
+	    if ( $current_user->roles[0] == 'administrator' ) {
+
+			add_meta_box(
+				'job_listing_data',
+				_x( 'Listing data', 'Listing fields metabox title', 'my-listing' ),
+				[ $this, 'fields_metabox_content' ],
+				'job_listing',
+				'normal',
+				'high'
+			);
+		}
 	}
 
 	/**
@@ -291,17 +295,22 @@ class Single_Listing_Screen {
 	 * @since 2.1.6
 	 */
 	public function display_author_metabox() {
-		add_meta_box(
-			'mylisting_author_metabox',
-			_x( 'Author', 'Listing author metabox title', 'my-listing' ),
-			function( $listing ) {
-				$listing = \MyListing\Src\Listing::get( $listing );
-				require locate_template( 'templates/admin/single-listing-screen/author-metabox.php' );
-			},
-			'job_listing',
-			'side',
-			'default'
-		);
+
+		global $current_user;
+	    
+	    if ( $current_user->roles[0] == 'administrator' ) {
+			add_meta_box(
+				'mylisting_author_metabox',
+				_x( 'Author', 'Listing author metabox title', 'my-listing' ),
+				function( $listing ) {
+					$listing = \MyListing\Src\Listing::get( $listing );
+					require locate_template( 'templates/admin/single-listing-screen/author-metabox.php' );
+				},
+				'job_listing',
+				'side',
+				'default'
+			);
+		}
 	}
 
 	/**
@@ -311,17 +320,22 @@ class Single_Listing_Screen {
 	 * @since 1.7.0
 	 */
 	public function display_priority_settings() {
-		add_meta_box(
-			'cts_listing_promotion_settings',
-			_x( 'Priority', 'Listing priority settings metabox in wp-admin', 'my-listing' ),
-			function( $listing ) {
-				$listing = \MyListing\Src\Listing::get( $listing );
-				require locate_template( 'templates/dashboard/promotions/admin/priority-settings.php' );
-			},
-			'job_listing',
-			'side',
-			'default'
-		);
+
+		global $current_user;
+	    
+	    if ( $current_user->roles[0] == 'administrator' ) {
+			add_meta_box(
+				'cts_listing_promotion_settings',
+				_x( 'Priority', 'Listing priority settings metabox in wp-admin', 'my-listing' ),
+				function( $listing ) {
+					$listing = \MyListing\Src\Listing::get( $listing );
+					require locate_template( 'templates/dashboard/promotions/admin/priority-settings.php' );
+				},
+				'job_listing',
+				'side',
+				'default'
+			);
+		}
 	}
 
 	/**
@@ -330,17 +344,22 @@ class Single_Listing_Screen {
 	 * @since 2.1.6
 	 */
 	public function display_verification_metabox() {
-		add_meta_box(
-			'mylisting_verification_metabox',
-			_x( 'Verification Status', 'Listing verification status metabox title', 'my-listing' ),
-			function( $listing ) {
-				$listing = \MyListing\Src\Listing::get( $listing );
-				require locate_template( 'templates/admin/single-listing-screen/verification-metabox.php' );
-			},
-			'job_listing',
-			'side',
-			'default'
-		);
+
+		global $current_user;
+	    
+	    if ( $current_user->roles[0] == 'administrator' ) {
+			add_meta_box(
+				'mylisting_verification_metabox',
+				_x( 'Verification Status', 'Listing verification status metabox title', 'my-listing' ),
+				function( $listing ) {
+					$listing = \MyListing\Src\Listing::get( $listing );
+					require locate_template( 'templates/admin/single-listing-screen/verification-metabox.php' );
+				},
+				'job_listing',
+				'side',
+				'default'
+			);
+		}
 	}
 
 	/**
@@ -350,17 +369,22 @@ class Single_Listing_Screen {
 	 * @since 2.1.6
 	 */
 	public function display_package_metabox() {
-		add_meta_box(
-			'mylisting_package_metabox',
-			_x( 'Package', 'Listing package metabox title', 'my-listing' ),
-			function( $listing ) {
-				$listing = \MyListing\Src\Listing::get( $listing );
-				require locate_template( 'templates/admin/single-listing-screen/package-metabox.php' );
-			},
-			'job_listing',
-			'side',
-			'default'
-		);
+
+		global $current_user;
+	    
+	    if ( $current_user->roles[0] == 'administrator' ) {
+			add_meta_box(
+				'mylisting_package_metabox',
+				_x( 'Package', 'Listing package metabox title', 'my-listing' ),
+				function( $listing ) {
+					$listing = \MyListing\Src\Listing::get( $listing );
+					require locate_template( 'templates/admin/single-listing-screen/package-metabox.php' );
+				},
+				'job_listing',
+				'side',
+				'default'
+			);
+		}
 	}
 
 	/**
@@ -370,17 +394,22 @@ class Single_Listing_Screen {
 	 * @since 2.1.6
 	 */
 	public function display_expiry_metabox() {
-		add_meta_box(
-			'mylisting_expiry_metabox',
-			_x( 'Expiry Date', 'Listing package metabox title', 'my-listing' ),
-			function( $listing ) {
-				$listing = \MyListing\Src\Listing::get( $listing );
-				require locate_template( 'templates/admin/single-listing-screen/expiry-metabox.php' );
-			},
-			'job_listing',
-			'side',
-			'default'
-		);
+
+		global $current_user;
+	    
+	    if ( $current_user->roles[0] == 'administrator' ) {
+			add_meta_box(
+				'mylisting_expiry_metabox',
+				_x( 'Expiry Date', 'Listing package metabox title', 'my-listing' ),
+				function( $listing ) {
+					$listing = \MyListing\Src\Listing::get( $listing );
+					require locate_template( 'templates/admin/single-listing-screen/expiry-metabox.php' );
+				},
+				'job_listing',
+				'side',
+				'default'
+			);
+		}
 	}
 
 	/**
