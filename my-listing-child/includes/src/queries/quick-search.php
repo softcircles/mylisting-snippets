@@ -29,19 +29,20 @@ class Quick_Search extends Query {
 			'search_keywords' => $search_term,
 			'posts_per_page' => 5,
         	'orderby' => 'relevance',
-        	'meta_query' => [
-            	[
-	                'key' => '_case27_listing_type',
-	                'value' => '',
-	                'compare' => '!=',
-            	],
-            	[
-            		'key' => '_case27_listing_type',
-	                'value' => 'place',
-	                'compare' => '!=',
-            	],
-	        ],
+            'meta_query' => [ [
+                'key' => '_case27_listing_type',
+                'value' => '',
+                'compare' => '!=',
+            ] ],
 		] );
+
+		if ( apply_filters( 'mylisting/quicksearch/show-regions', true ) === true ) {
+			$sections['regions'] = $this->get_terms( [
+				'title' => _x( 'Regions', 'Quick search > Regions section title', 'my-listing' ),
+				'taxonomy' => 'region',
+				'search_term' => $search_term,
+			] );
+		}
 
 		if ( ! is_wp_error( $query ) && $query->have_posts() ) {
 			while ( $query->have_posts() ) {
@@ -72,14 +73,6 @@ class Quick_Search extends Query {
 			}
 
 			wp_reset_postdata();
-		}
-
-		if ( apply_filters( 'mylisting/quicksearch/show-regions', true ) === true ) {
-			$sections['regions'] = $this->get_terms( [
-				'title' => _x( 'Regions', 'Quick search > Regions section title', 'my-listing' ),
-				'taxonomy' => 'region',
-				'search_term' => $search_term,
-			] );
 		}
 
 		if ( apply_filters( 'mylisting/quicksearch/show-tags', true ) === true ) {
