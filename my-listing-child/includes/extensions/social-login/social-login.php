@@ -37,16 +37,17 @@ class Social_Login {
 		add_action( 'mylisting_ajax_nopriv_cts_login_endpoint', [ $this, 'login_endpoint' ] );
 
         // Display login buttons.
-        add_action( 'woocommerce_login_form_end', [ $this, 'display_buttons' ] );
-        add_action( 'woocommerce_register_form_end', [ $this, 'display_buttons' ] );
+        add_action( 'woocommerce_login_form_start', [ $this, 'display_buttons' ] );
+        add_action( 'woocommerce_register_form_start', [ $this, 'display_buttons' ] );
 
         // Display connected accounts.
-        add_action( 'woocommerce_edit_account_form_start', [ $this, 'display_connected_accounts' ], 10 );
+        add_action( 'mylisting/connected-accounts-section', [ $this, 'display_connected_accounts' ], 10 );
+        add_filter( 'mylisting/social-login-enabled', [ $this, 'get_networks' ] );
 
         if ( apply_filters( 'mylisting/enable-user-avatars', true ) !== false ) {
 	        // profile picture settings
-	        add_action( 'woocommerce_edit_account_form_start', [ $this, 'display_profile_picture_settings' ], 10 );
-	        add_action( 'woocommerce_save_account_details', [ $this, 'save_profile_picture_settings' ], 35 );
+	        add_action( 'mylisting/account-details/before-profile-picture', [ $this, 'display_profile_picture_settings' ], 10 );
+	        add_action( 'woocommerce_save_account_details', [ $this, 'save_profile_picture_settings' ], 25 );
 
 	        // modify user avatar based on picture settings
 			add_filter( 'get_avatar_url', [ $this, 'set_user_picture' ], 35, 3 );
@@ -116,12 +117,12 @@ class Social_Login {
 
 		// Output buttons.
 		?><div class="cts-social-login-wrapper">
-			<p class="connect-with"><?php _ex( 'Or connect with', 'Social login message', 'my-listing' ) ?></p>
 			<div class="cts-network-wrapper">
 				<?php foreach ( $networks as $network ): ?>
 				<?php echo $this->networks[ $network ]->display_button() ?>
 			<?php endforeach ?>
-		</div>
+			</div>
+			<p class="connect-with"><?php _ex( 'Or', 'Social login message', 'my-listing' ) ?></p>
 		</div><?php
 	}
 
@@ -137,7 +138,6 @@ class Social_Login {
 
 		// Output buttons.
 		?><div class="cts-connected-accounts">
-			<h5><?php _e( 'Connected Accounts', 'my-listing' ) ?></h5>
 			<?php foreach ( $networks as $network ): ?>
 				<?php echo $this->networks[ $network ]->display_connected_account() ?>
 			<?php endforeach ?>
@@ -250,11 +250,6 @@ class Social_Login {
 	 * @since 1.6.3
 	 */
 	public function setup_options_page() {
-
-		if ( ! function_exists( 'acf_add_options_sub_page' ) ) {
-            return false;
-        }
-        
 		acf_add_options_sub_page( [
 			'page_title' 	=> _x( 'Social Login', 'Social Login page title in WP Admin', 'my-listing' ),
 			'menu_title'	=> _x( 'Social Login', 'Social Login menu title in WP Admin', 'my-listing' ),
