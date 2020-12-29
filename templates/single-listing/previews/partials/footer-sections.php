@@ -8,11 +8,9 @@ if ( ! defined('ABSPATH') ) {
     exit;
 }
 
-$section_count = 0;
+foreach ( (array) $options['footer']['sections'] as $section ) {
 
-foreach ((array) $options['footer']['sections'] as $section) {
-
-    if ( $section['type'] == 'categories' ) {
+    if ( $section['type'] === 'categories' ) {
         // Keys = taxonomy name
         // Value = taxonomy field name (in the listing type editor)
         $taxonomies = array_merge( [
@@ -30,39 +28,33 @@ foreach ((array) $options['footer']['sections'] as $section) {
             continue;
         }
 
-        $section_count++;
-        $category_count = count( $terms );
-        $first_category = array_shift( $terms );
-        $first_category = new \MyListing\Src\Term( $first_category );
-        $category_names = array_map( function( $category ) {
-            return $category->name;
-        }, $terms );
-        $categories_string = join(', ', $category_names);
+        // $category_count = count( $terms );
+        // $first_category = array_shift( $terms );
+        // $first_category = new \MyListing\Src\Term( $first_category );
+        // $category_names = array_map( function( $category ) {
+        //     return $category->name;
+        // }, $terms );
+        // $categories_string = join(', ', $category_names);
         ?>
         <div class="listing-details c27-footer-section">
             <ul class="c27-listing-preview-category-list">
-                <?php foreach ( (array) $terms as $cat) {
-                    $category_mod = new \MyListing\Src\Term( $cat ); ?>
-                    <li>
-                        <a href="<?php echo esc_url( $category_mod->get_link() ) ?>">
-                            <span class="cat-icon" style="background-color: <?php echo esc_attr( $category_mod->get_color() ) ?>;">
-                                <?php echo $category_mod->get_icon( [ 'background' => false ] ) ?>
-                            </span>
-                            <span class="category-name"><?php echo esc_html( $category_mod->get_name() ) ?></span>
-                        </a>
-                    </li>
-                <?php } ?>
-                
-
-                <?php if ( count( $terms ) && false ): ?>
-                    <li data-toggle="tooltip" data-placement="top" data-original-title="<?php echo esc_attr( $categories_string ) ?>" data-html="true">
-                        <div class="categories-dropdown dropdown c27-more-categories">
-                            <a href="#other-categories">
-                                <span class="cat-icon cat-more">+<?php echo $category_count - 1 ?></span>
+                <?php
+                foreach ( $terms as $term ) {
+                    if ( ! ( $term = \MyListing\Src\Term::get( $term ) ) ) {
+                        continue;
+                    }
+                    ?>
+                        <li>
+                            <a href="<?php echo esc_url( $term->get_link() ) ?>">
+                                <span class="cat-icon" style="background-color: <?php echo esc_attr( $term->get_color() ) ?>;">
+                                    <?php echo $term->get_icon( [ 'background' => false ] ) ?>
+                                </span>
+                                <span class="category-name"><?php echo esc_html( $term->get_name() ) ?></span>
                             </a>
-                        </div>
-                    </li>
-                <?php endif ?>
+                        </li>
+                    <?php
+                }
+                ?>
             </ul>
 
             <div class="ld-info">
@@ -78,7 +70,7 @@ foreach ((array) $options['footer']['sections'] as $section) {
         </div>
     <?php }
 
-    if ( $section['type'] == 'host' ) {
+    if ( $section['type'] === 'host' ) {
         $field_key = ! empty( $section['show_field'] ) ? $section['show_field'] : 'related_listing';
         $field = $listing->get_field_object( $field_key );
         if ( ! ( $field && $field->get_type() === 'related-listing' ) ) {
@@ -88,12 +80,10 @@ foreach ((array) $options['footer']['sections'] as $section) {
         $related_items = (array) $field->get_related_items();
         if ( empty( $related_items ) ) {
             continue;
-        }
-
-        $section_count++; ?>
+        } ?>
 
         <?php foreach ( $related_items as $key => $related_item ):
-            if ( ! ( $related_item = \MyListing\Src\Listing::get( $related_item ) ) ) {
+            if ( ! ( $related_item = \MyListing\Src\Listing::get( $related_item ) ) || $related_item->get_status() !== 'publish' ) {
                 continue;
             }
 
@@ -128,8 +118,7 @@ foreach ((array) $options['footer']['sections'] as $section) {
         <?php endforeach ?>
     <?php }
 
-    if ( $section['type'] == 'author' && ( $listing->author instanceof \MyListing\Src\User ) && $listing->author->exists() ) {
-        $section_count++; ?>
+    if ( $section['type'] === 'author' && ( $listing->author instanceof \MyListing\Src\User ) && $listing->author->exists() ) { ?>
             <div class="event-host c27-footer-section">
                 <a href="<?php echo esc_url( $listing->author->get_link() ) ?>">
                     <?php if ( $avatar = $listing->author->get_avatar() ): ?>
@@ -137,9 +126,14 @@ foreach ((array) $options['footer']['sections'] as $section) {
                             <img src="<?php echo esc_url( $avatar ) ?>" alt="<?php echo esc_attr( $listing->author->get_name() ) ?>">
                         </div>
                     <?php endif ?>
-                    <span class="host-name"><?php echo str_replace('[[author]]', esc_html( $listing->author->get_name() ), $section['label']) ?></span>
+                    <span class="host-name">
+                        <?php
+                        // backward compatibility pre v2.4.5
+                        $section['label'] = str_replace( '[[author]]', '[[:authname]]', $section['label'] );
+                        echo $listing->compile_string( $section['label'] );
+                        ?>
+                    </span>
                 </a>
-
                 <div class="ld-info">
                     <ul>
                         <?php if (isset($section['show_quick_view_button']) && $section['show_quick_view_button'] == 'yes'): ?>
@@ -153,36 +147,32 @@ foreach ((array) $options['footer']['sections'] as $section) {
             </div>
     <?php }
 
-    if ($section['type'] == 'details' && $section['details']) {
-        $section_count++; ?>
+    if ( $section['type'] === 'details' && ! empty( $section['details'] ) ) { ?>
         <div class="listing-details-3 c27-footer-section">
             <ul class="details-list">
-                <?php foreach ((array) $section['details'] as $detail):
-                    if ( ! isset( $detail['icon'] ) ) {
-                        $detail['icon'] = '';
+                <?php foreach ( (array) $section['details'] as $detail ) {
+                    $string = $detail['label'];
+                    $attributes = [];
+                    $classes = [];
+
+                    if ( $is_caching ) {
+                        list( $string, $attributes, $cls ) = \MyListing\prepare_string_for_cache( $string, $listing );
                     }
 
-                    if ( ! $listing->has_field( $detail['show_field'] ) ) {
-                        continue;
+                    if ( \MyListing\str_contains( $string, '[[:reviews-stars]]' ) ) {
+                        $classes[] = 'listing-rating';
                     }
 
-                    $detail_val = $listing->get_field( $detail['show_field'] );
-                    // Escape square brackets so any shortcode added by the listing owner won't be run.
-                    $detail_val = str_replace( [ "[" , "]" ] , [ "&#91;" , "&#93;" ] , $detail_val );
-                    $detail_val = apply_filters( 'case27\listing\preview\detail\\' . $detail['show_field'], $detail_val, $detail, $listing );
-
-                    if ( is_array( $detail_val ) ) {
-                        $detail_val = join( ', ', $detail_val );
-                    }
-
-                    $GLOBALS['c27_active_shortcode_content'] = $detail_val; ?>
-                    <li>
-                        <?php if ( ! empty( $detail['icon'] ) ): ?>
-                            <i class="<?php echo esc_attr( $detail['icon'] ) ?>"></i>
-                        <?php endif ?>
-                        <span><?php echo str_replace( '[[field]]', $detail_val, do_shortcode( $detail['label'] ) ) ?></span>
-                    </li>
-                <?php endforeach ?>
+                    $content = do_shortcode( $listing->compile_string( $string ) );
+                    if ( ! empty( $content ) ) { ?>
+                        <li class="<?php echo esc_attr( join( ' ', $classes ) ) ?>"  <?php echo join( ' ', $attributes ) ?>>
+                            <?php if ( ! empty( $detail['icon'] ) ): ?>
+                                <i class="<?php echo esc_attr( $detail['icon'] ) ?>"></i>
+                            <?php endif ?>
+                            <span><?php echo $content ?></span>
+                        </li>
+                    <?php }
+                } ?>
             </ul>
         </div>
     <?php }
@@ -191,7 +181,7 @@ foreach ((array) $options['footer']['sections'] as $section) {
         if (
             ( isset($section['show_quick_view_button']) && $section['show_quick_view_button'] == 'yes' ) ||
             ( isset($section['show_bookmark_button']) && $section['show_bookmark_button'] == 'yes' )
-         ): $section_count++; ?>
+         ): ?>
             <div class="listing-details actions c27-footer-section">
                 <div class="ld-info">
                     <ul>
@@ -206,8 +196,4 @@ foreach ((array) $options['footer']['sections'] as $section) {
             </div>
         <?php endif ?>
     <?php }
-}
-
-if ( $section_count < 1 ) {
-    echo '<div class="c27-footer-empty"></div>';
 }
