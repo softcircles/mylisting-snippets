@@ -22,6 +22,7 @@ if ( ! empty( $_REQUEST['job_id'] ) && absint( $_REQUEST['job_id'] ) && $job_id 
 	$listing = \MyListing\Src\Listing::get( $job_id );
 	$_REQUEST['listing_package'] = $listing->get_product_id();
 }
+
 ?>
 
 <div class="i-section">
