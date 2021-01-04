@@ -9,30 +9,30 @@
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
-}
+} ?>
 
-?>
-
-<!-- Modal - PROMOTIONS-->
 <div id="promo-modal" class="modal modal-27" role="dialog">
     <div class="modal-dialog modal-md">
-
-	    <!-- Modal Content -->
 	    <div class="modal-content">
 	        <div class="sign-in-box">
 
 				<?php if ( ! empty( $products ) ): ?>
-		            <!-- Title -->
 		            <div class="title-style-1">
 		                <span class="icon-box-add"></span>
 		                <h5><?php _ex( 'Promote Listing', 'Choose promotion modal title', 'my-listing' ) ?> &mdash; <em class="listing-name"></em></h5>
 		            </div>
 
-		        	<!-- Packages-->
 		            <ul class="promo-product-list buy-package">
 						<?php foreach ( (array) $products as $product ):
 							if ( ! $product->is_type( 'promotion_package' ) || ! $product->is_purchasable() || $product->get_duration() <= 0 ) {
 								continue;
+							}
+							
+							$_product_image = get_field( 'pricing_plan_image', $product->get_id() );
+							if ( is_array( $_product_image ) && ! empty( $_product_image['sizes'] ) && ! empty( $_product_image['sizes']['large'] ) ) {
+								$product_image = $_product_image['sizes']['large'];
+							} else {
+								$product_image = false;
 							}
 							?>
 
@@ -43,6 +43,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 			                        </div>
 			                        <div class="promo-item-details">
 			                            <h5><?php echo $product->get_name() ?></h5>
+			                            <?php if ( $product_image ): ?>
+											<img src="<?php echo esc_url( $product_image ) ?>" class="plan-image">
+										<?php endif ?>
 			                            <p>
 			                            	<span><?php echo $product->get_price_html() ?></span>
 			                            	<?php _ex(
@@ -51,9 +54,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 			                            		'my-listing'
 			                            	) ?>
 			                            </p>
-						    <a href="#" class="read-more-description"><?php esc_html_e( 'Read More', 'my-listing' ); ?></a>
-						    <p class="short-description" style="display: none;"><?php echo $product->get_short_description() ?></p>
-						    <a href="#" class="hide-description" style="display: none; background-color: grey; padding: 3px; border-radius: 3px; margin-top: 5px;"><?php esc_html_e( 'Hide Description', 'my-listing' ); ?></a>
+			                            <p class="plan-desc"><?php echo $product->get_short_description() ?></p>
 			                        </div>
 			                    </a>
 			                </li>
@@ -62,13 +63,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 				<?php endif ?>
 
 				<?php if ( ! empty( $packages ) ): ?>
-		            <!-- Owned Packages Title -->
 		            <div class="title-style-1 available-promo-title">
 		                <span class="icon-box-check"></span>
 		                <h5><?php _ex( 'Owned packages', 'Choose promotion modal - owned packages', 'my-listing' ) ?></h5>
 		            </div>
 
-	            	<!-- Owned Packages -->
 		            <ul class="promo-product-list use-package">
 						<?php foreach ( (array) $packages as $package ):
 							$duration = absint( get_post_meta( $package->ID, '_duration', true ) );
