@@ -145,7 +145,10 @@ class Expiring_Listings_User_Notification extends Base_Notification {
 				->add_thematic_break();
 		}
 
-		$template->add_primary_button( _x( 'Go to dashboard', 'Notifications', 'my-listing' ), esc_url( wc_get_account_endpoint_url( 'my-listings' ) ) );
+		$template->add_primary_button(
+			_x( 'Go to dashboard', 'Notifications', 'my-listing' ),
+			esc_url( wc_get_account_endpoint_url( \MyListing\my_listings_endpoint_slug() ) )
+		);
 
 		return $template->get_body();
 	}
