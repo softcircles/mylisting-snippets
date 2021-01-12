@@ -22,12 +22,6 @@ class Expiring_Listings_User_Notification extends Base_Notification {
 						'relatioin' => 'OR',
 						[
 							'key' => '_job_expires',
-							'value' => date( 'Y-m-d', current_time( 'timestamp' ) + ( apply_filters( 'mylisting/expiring-listings/months-notice', 2 ) * MONTH_IN_SECONDS ) ),
-							'compare' => '=',
-							'type' => 'DATE',
-						],
-						[
-							'key' => '_job_expires',
 							'value' => date( 'Y-m-d', current_time( 'timestamp' ) + ( apply_filters( 'mylisting/expiring-listings/weeks-notice', 4 ) * WEEK_IN_SECONDS ) ),
 							'compare' => '=',
 							'type' => 'DATE',
@@ -36,6 +30,18 @@ class Expiring_Listings_User_Notification extends Base_Notification {
 							'key' => '_job_expires',
 							'value' => date( 'Y-m-d', current_time( 'timestamp' ) + ( apply_filters( 'mylisting/expiring-listings/days-notice', 15 ) * DAY_IN_SECONDS ) ),
 							'compare' => '=',
+							'type' => 'DATE',
+						],
+						[
+							'key' => '_job_expires',
+							'value' => date( 'Y-m-d', current_time( 'timestamp' ) + ( apply_filters( 'mylisting/expiring-listings/days-notice', 7 ) * DAY_IN_SECONDS ) ),
+							'compare' => '=',
+							'type' => 'DATE',
+						],
+						[
+							'key' => '_job_expires',
+							'value' => date( 'Y-m-d', current_time( 'timestamp' ) + ( apply_filters( 'mylisting/expiring-listings/days-notice', 3 ) * DAY_IN_SECONDS ) ),
+							'compare' => '<=',
 							'type' => 'DATE',
 						],
 					],
