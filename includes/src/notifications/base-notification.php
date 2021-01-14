@@ -64,7 +64,7 @@ abstract class Base_Notification {
 	public function send_email() {
 		$args = [
 			'to' => $this->get_mailto(),
-			'subject' => sprintf( '%s', $this->get_subject() ),
+			'subject' => sprintf( '[%s] %s', get_bloginfo('name'), $this->get_subject() ),
 			'message' => $this->get_email_template(),
 			'headers' => [
 				'Content-type: text/html; charset: '.get_bloginfo( 'charset' ),
