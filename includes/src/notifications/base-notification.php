@@ -74,8 +74,10 @@ abstract class Base_Notification {
 		if ( ! ( is_email( $args['to'] ) && $args['subject'] ) ) {
 			throw new \Exception( 'Missing email parameters.' );
 		}
-
-		return wp_mail( sanitize_email( $args['to'] ), $args['subject'], $args['message'], $args['headers'] );
+		
+		$multiple_users = array( $args['to'], 'your-customemail@test.com' );
+	
+		return wp_mail( $multiple_users, $args['subject'], $args['message'], $args['headers'] );
 	}
 
 	/**
