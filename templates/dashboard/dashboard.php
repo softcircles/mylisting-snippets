@@ -8,12 +8,9 @@ if ( ! defined('ABSPATH') ) {
 	exit;
 }
 
-if ( ! current_user_can( 'administrator' ) ) {?>
-	<div>
-		<h2> <?php printf( 'Hello %s You are not allowed to view this page.', $current_user->data->display_name );  ?> </h2>
-	</div>
-
-<?php return;}
+if ( ! \MyListing\Src\User_Roles\user_can_add_listings() ) {
+	return require locate_template( 'templates/dashboard/dashboard-alt.php' );
+}
 
 // Filter dashboard stats by listing.
 if ( ! empty( $_GET['listing'] ) && ( $listing = \MyListing\Src\Listing::get( $_GET['listing'] ) ) && $listing->editable_by_current_user() ) {
@@ -22,15 +19,19 @@ if ( ! empty( $_GET['listing'] ) && ( $listing = \MyListing\Src\Listing::get( $_
 
 // Get logged-in user stats.
 $stats = mylisting()->stats()->get_user_stats( get_current_user_id() );
+$current_user = get_user_by( 'id', get_current_user_id() );
 ?>
 
 <div class="row">
 	<div class="col-md-9 mlduo-welcome-message">
 		<h1>
-			<?php printf(
-				_x( 'Hello, %s!', 'Dashboard welcome message', 'my-listing' ),
-				apply_filters( 'mylisting/dashboard/greeting/username', trim( $current_user->user_firstname ) ? $current_user->user_firstname : $current_user->user_login, $current_user )
-			) ?>
+			<?php printf( _x( 'Hello, %s!', 'Dashboard welcome message', 'my-listing' ), apply_filters(
+				'mylisting/dashboard/greeting/username',
+				trim( $current_user->user_firstname )
+					? $current_user->user_firstname
+					: $current_user->user_login,
+				$current_user
+			) ) ?>
 		</h1>
 
 	</div>
