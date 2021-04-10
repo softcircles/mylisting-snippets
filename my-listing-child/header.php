@@ -48,10 +48,6 @@ if ( function_exists( 'elementor_theme_do_location' ) && elementor_theme_do_loca
 	 *
 	 * @since 1.0
 	 */
-	global $post;
-	if ( $post->post_type == 'job_listing') {
-		return;
-	}
 	$pageTop = apply_filters( 'mylisting/header-config', [
 		'header' => [ 'show' => true, 'args' => [] ],
 		'title-bar' => [
@@ -67,3 +63,5 @@ if ( function_exists( 'elementor_theme_do_location' ) && elementor_theme_do_loca
 		}
 	}
 }
+
+echo do_shortcode( '[adning id="70038"]' );
