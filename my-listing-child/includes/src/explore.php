@@ -21,7 +21,7 @@ class Explore {
 		self::$custom_taxonomies = mylisting_custom_taxonomies();
 
 		add_action( 'init', [ __CLASS__, 'add_rewrite_rules' ], 5 );
-		add_action( 'template_redirect', [ __CLASS__, 'handle_single_term_page' ], 99 );
+		add_action( 'template_redirect', [ __CLASS__, 'handle_single_term_page' ], 35 );
 	}
 
 	public function __construct( $data ) {
@@ -329,7 +329,7 @@ class Explore {
 	    	if ( ! $term ) {
 	    		continue;
 	    	}
-
+// print_r(  );exit();
 	    	/* we're on single listing term page */
 	    	$image = $term->get_image();
     		$page_title = apply_filters( isset( $tax['name_filter'] ) ? $tax['name_filter'] : 'single_term_title', $term->get_name() );
@@ -346,10 +346,12 @@ class Explore {
 
 			if ( $cfg->is_yoast ) {
 				$meta = get_option( 'wpseo_taxonomy_meta' );
+
 				$term_object = get_term( $term->get_id(), $tax['taxonomy'] );
 				$tax_slug = $term_object->taxonomy;
 				$term_id = $term_object->term_id;
 				$replacer = new \WPSEO_Replace_Vars();
+				$cfg->noindex = false;
 
 				if ( isset( $meta[ $tax_slug ][ $term_id ]['wpseo_title'] ) ) {
 					$cfg->title = $replacer->replace(
@@ -373,6 +375,10 @@ class Explore {
 						\WPSEO_Options::get('metadesc-tax-'.$tax_slug, ''),
 						$term_object
 					);
+	            }
+
+	            if ( isset( $meta[ $term->get_taxonomy_slug() ][ $term->get_id() ]['wpseo_noindex'] ) && $meta[ $term->get_taxonomy_slug() ][ $term->get_id() ]['wpseo_noindex'] === 'noindex' ) {
+	            	$cfg->noindex = true;
 	            }
 			}
 
@@ -419,6 +425,10 @@ class Explore {
 				if ( $cfg->image && ! $cfg->is_yoast ) {
 					printf( '<meta property="og:image" content="%s"/>'."\n", esc_attr( $cfg->image ) );
 				}
+
+				if ( $cfg->noindex ) {
+					printf( '<meta name="robots" content="noindex" />'."\n" );
+				}
 			}, 1 );
 
 			/**
@@ -436,10 +446,7 @@ class Explore {
 			add_filter( 'wpseo_opengraph_desc', function() use ( $cfg ) { return $cfg->description; } );
 			add_filter( 'wpseo_canonical', function() use ( $cfg ) { return $cfg->link; } );
 			if ( $cfg->is_yoast && $cfg->image ) {
-				add_action( 'wp_head', function() use ( $cfg ) {
-					printf( '<meta property="og:image" content="%s"/>'."\n", esc_attr( $cfg->image ) );
-				}, 1 );
-				// add_filter( 'wpseo_opengraph', function() use ( $cfg ) { $GLOBALS['wpseo_og']->image_output( $cfg->image ); }, 10e5, 1 );
+				add_filter( 'wpseo_opengraph_image', function( $image ) use ( $cfg ) { return $cfg->image; }, 10e5, 1 );
 			}
 
 	    	return;
