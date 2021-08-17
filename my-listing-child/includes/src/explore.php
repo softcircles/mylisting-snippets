@@ -440,7 +440,7 @@ class Explore {
 			add_filter( 'get_canonical_url', function() use ( $cfg ) { return $cfg->link; } );
 
 			// Yoast
-			add_filter( 'wpseo_title', function() use ( $cfg ) { return $cfg->title; }, 10e3 );
+			add_filter( 'wpseo_opengraph_title', function() use ( $cfg ) { return $cfg->title; }, 10e3 );
 			add_filter( 'wpseo_opengraph_url', function() use ( $cfg ) { return $cfg->link; }, 10e3 );
 			add_filter( 'wpseo_metadesc', function() use ( $cfg ) { return $cfg->description; } );
 			add_filter( 'wpseo_opengraph_desc', function() use ( $cfg ) { return $cfg->description; } );
