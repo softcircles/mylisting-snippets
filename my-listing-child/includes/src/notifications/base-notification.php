@@ -18,7 +18,7 @@ abstract class Base_Notification {
 			// send email
 			if ( $this->should_send_email() ) {
 				$this->send_email();
-				mlog()->note( 'Notification email sent: '.c27()->class2file( static::class ) );
+				mlog()->note( 'Notification email sent: '.$this->get_key() );
 			}
 		} catch ( \Exception $e ) {
 			mlog()->warn( 'Email failed: '.$e->getMessage() );
@@ -57,14 +57,26 @@ abstract class Base_Notification {
 	abstract public function get_mailto();
 
 	/**
+	 * Generate a unique key for notification based on classname.
+	 *
+	 * @since 2.6.7
+	 */
+	public function get_key() {
+		return c27()->class2file( static::class );
+	}
+
+	/**
 	 * Validate and send the notification email.
 	 *
 	 * @since 2.1
 	 */
 	public function send_email() {
 		$args = [
-			'to' => $this->get_mailto(),
-			'subject' => sprintf( '[%s] %s', get_bloginfo('name'), $this->get_subject() ),
+			'to' => apply_filters(
+				sprintf( 'mylisting/emails/%s:mailto', $this->get_key() ),
+				$this->get_mailto()
+			),
+			'subject' => sprintf( '[%s] %s', get_bloginfo('name'), $this->getEncodedSubject( $this->get_subject() ) ),
 			'message' => $this->get_email_template(),
 			'headers' => [
 				'Content-type: text/html; charset: '.get_bloginfo( 'charset' ),
@@ -75,11 +87,21 @@ abstract class Base_Notification {
 			throw new \Exception( 'Missing email parameters.' );
 		}
 
-		$multiple_recipients = array( $args['to'], 'test@test.com', 'test2@test.com' );
-
-		return wp_mail( $multiple_recipients, $args['subject'], $args['message'], $args['headers'] );
+		return wp_mail( sanitize_email( $args['to'] ), $args['subject'], $args['message'], $args['headers'] );
 	}
-
+	
+	public function getEncodedSubject(string $subject): string {
+	    if (!preg_match('/[^\x20-\x7e]/', $subject)) {
+		// ascii-only subject, return as-is
+		return $subject;
+	    }
+	    // Subject is non-ascii, needs encoding
+	    $encoded = quoted_printable_encode($subject);
+	    $prefix = '=?UTF-8?q?';
+	    $suffix = '?=';
+	    return $prefix . str_replace("=\r\n", $suffix . "\r\n  " . $prefix, $encoded) . $suffix;
+	}
+	
 	/**
 	 * Retrieve the template to be used by the notification.
 	 *
@@ -87,7 +109,7 @@ abstract class Base_Notification {
 	 */
 	public function get_email_template() {
 		// determine which template file to use
-		$template_file = locate_template( sprintf( 'templates/emails/%s.php', c27()->class2file( static::class ) ) );
+		$template_file = locate_template( sprintf( 'templates/emails/%s.php', $this->get_key() ) );
 		if ( ! $template_file ) {
 			$template_file = locate_template( 'templates/emails/default.php' );
 		}
@@ -116,7 +138,7 @@ abstract class Base_Notification {
 	 */
 	public function should_send_email() {
 		$options = get_option( 'mylisting_notifications', [] );
-		$notification = c27()->class2file( static::class );
+		$notification = $this->get_key();
 		$should_send = true;
 
 		if ( isset( $options[ $notification ], $options[ $notification ]['send_email'] ) && $options[ $notification ]['send_email'] === 'disabled' ) {
