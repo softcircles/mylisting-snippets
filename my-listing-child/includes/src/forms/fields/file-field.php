@@ -11,7 +11,7 @@ class File_Field extends Base_Field {
 	public function get_posted_value() {
 		$form_key = 'current_'.$this->key;
 		$files = isset( $_POST[ $form_key ] ) ? (array) $_POST[ $form_key ] : [];
-
+// print_r( [ $form_key, $files ] );exit();
 		/**
 		 * Some CDN and media offload plugins replace all occurrences of a local URL in a page
 		 * with it's CDN value.
@@ -76,10 +76,6 @@ class File_Field extends Base_Field {
 			$file_guid = current( explode( '?', $file_guid ) );
 			$file_info = wp_check_filetype( $file_guid );
 
-			if ( ! empty( $this->props['allowed_mime_types'] ) ) {
-				$this->props['allowed_mime_types']['heic'] = 'image/heic';
-			}
-			
 			if (
 				! empty( $this->props['allowed_mime_types'] ) && $file_info
 				&& ! in_array( $file_info['type'], $this->props['allowed_mime_types'], true )
@@ -140,6 +136,8 @@ class File_Field extends Base_Field {
 					'post_status' => 'inherit',
 					'post_parent' => $this->listing->get_id(),
 				] );
+
+				update_post_meta( $row->ID, '_wp_attachment_image_alt', get_the_title( $this->listing->get_id() ) );
 			}
 
 			// attachment is valid, store it's ID
@@ -227,6 +225,8 @@ class File_Field extends Base_Field {
 			wp_generate_attachment_metadata( $attachment_id, $filepath )
 		);
 
+		update_post_meta( $attachment_id, '_wp_attachment_image_alt', get_the_title( $this->listing->get_id() ) );
+
 		mlog( 'Generated attachment for writable file #'.$attachment_id );
 		return $attachment_id;
 	}
@@ -238,6 +238,13 @@ class File_Field extends Base_Field {
 		$this->props['file_limit'] = '';
 		$this->props['allowed_mime_types'] = new \stdClass;
 		$this->props['allowed_mime_types_arr'] = [];
+	}
+
+	public function after_custom_props() {
+		// add webp support for preset image fields (logo, cover, gallery)
+		if ( in_array( $this->props['slug'], ['job_logo', 'job_cover', 'job_gallery'], true ) ) {
+			$this->props['allowed_mime_types']['webp'] = 'image/webp';
+		}
 	}
 
 	public function get_editor_options() {
