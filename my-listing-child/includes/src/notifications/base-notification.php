@@ -76,7 +76,7 @@ abstract class Base_Notification {
 				sprintf( 'mylisting/emails/%s:mailto', $this->get_key() ),
 				$this->get_mailto()
 			),
-			'subject' => sprintf( '[%s] %s', get_bloginfo('name'), $this->getEncodedSubject( $this->get_subject() ) ),
+			'subject' => sprintf( '[%s] %s', $this->getEncodedSubject( get_bloginfo('name') ), $this->getEncodedSubject( $this->get_subject() ) ),
 			'message' => $this->get_email_template(),
 			'headers' => [
 				'Content-type: text/html; charset: '.get_bloginfo( 'charset' ),
@@ -87,7 +87,7 @@ abstract class Base_Notification {
 			throw new \Exception( 'Missing email parameters.' );
 		}
 
-		return wp_mail( sanitize_email( $args['to'] ), $args['subject'], $args['message'], $args['headers'] );
+		return wp_mail( sanitize_email( $args['to'] ), $this->getEncodedSubject( $args['subject'] ), $args['message'], $args['headers'] );
 	}
 	
 	public function getEncodedSubject(string $subject): string {
