@@ -9,21 +9,18 @@ if ( ! defined('ABSPATH') ) {
 class Quick_Search extends Query {
 	use \MyListing\Src\Traits\Instantiatable;
 
-	public $action = 'mylisting_quick_search';
+	public function __construct() {
+		add_action( 'mylisting_ajax_mylisting_quick_search', [ $this, 'handle' ] );
+		add_action( 'mylisting_ajax_nopriv_mylisting_quick_search', [ $this, 'handle' ] );
+	}
 
     public function handle() {
-		mylisting_check_ajax_referrer();
+		if ( apply_filters( 'mylisting/ajax-get-request-security-check', false ) === true ) {
+			check_ajax_referer( 'c27_ajax_nonce', 'security' );
+		}
 
 		$search_term = sanitize_text_field( ! empty( $_GET['s'] ) ? $_GET['s'] : '' );
 		$sections = [];
-
-		if ( apply_filters( 'mylisting/quicksearch/show-categories', true ) === true ) {
-			$sections['categories'] = $this->get_terms( [
-				'title' => _x( 'Categories', 'Quick search > Categories section title', 'my-listing' ),
-				'taxonomy' => 'job_listing_category',
-				'search_term' => $search_term,
-			] );
-		}
 
 		$query = $this->query( [
 			'search_keywords' => $search_term,
@@ -35,14 +32,6 @@ class Quick_Search extends Query {
                 'compare' => '!=',
             ] ],
 		] );
-
-		if ( apply_filters( 'mylisting/quicksearch/show-regions', true ) === true ) {
-			$sections['regions'] = $this->get_terms( [
-				'title' => _x( 'Regions', 'Quick search > Regions section title', 'my-listing' ),
-				'taxonomy' => 'region',
-				'search_term' => $search_term,
-			] );
-		}
 
 		if ( ! is_wp_error( $query ) && $query->have_posts() ) {
 			while ( $query->have_posts() ) {
@@ -75,6 +64,22 @@ class Quick_Search extends Query {
 			wp_reset_postdata();
 		}
 
+		if ( apply_filters( 'mylisting/quicksearch/show-categories', true ) === true ) {
+			$sections['categories'] = $this->get_terms( [
+				'title' => _x( 'Categories', 'Quick search > Categories section title', 'my-listing' ),
+				'taxonomy' => 'job_listing_category',
+				'search_term' => $search_term,
+			] );
+		}
+		
+		if ( apply_filters( 'mylisting/quicksearch/show-regions', true ) === true ) {
+			$sections['regions'] = $this->get_terms( [
+				'title' => _x( 'Regions', 'Quick search > Regions section title', 'my-listing' ),
+				'taxonomy' => 'region',
+				'search_term' => $search_term,
+			] );
+		}
+
 		if ( apply_filters( 'mylisting/quicksearch/show-tags', true ) === true ) {
 			$sections['tags'] = $this->get_terms( [
 				'title' => _x( 'Tags', 'Quick search > Tags section title', 'my-listing' ),
@@ -94,7 +99,7 @@ class Quick_Search extends Query {
 			$response['content'] .= implode( '', $section );
 		}
 
-		if ( CASE27_ENV === 'dev' ) {
+		if ( \MyListing\is_dev_mode() ) {
 			$response['sql'] = $query->request;
 		}
 
