@@ -8,15 +8,24 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-$endpoint = wc_get_account_endpoint_url( 'my-listings' );
+if ( ! \MyListing\Src\User_Roles\user_can_add_listings() ) {
+	printf(
+		'<div class="element col-sm-6 text-center col-sm-offset-3">%s</div>',
+		__( 'You cannot access this page.' )
+	);
+	return;
+}
+
+$endpoint = wc_get_account_endpoint_url( \MyListing\my_listings_endpoint_slug() );
 ?>
 
 <?php do_action( 'mylisting/user-listings/before' ) ?>
 
 <div class="row my-listings-tab-con">
-	<div class="col-md-9 mlduo-welcome-message">
+	<div class="col-md-6 mlduo-welcome-message">
 		<h1><?php _ex( 'Your listings', 'Dashboard welcome message', 'my-listing' ) ?></h1>
 	</div>
+	<?php require locate_template( 'templates/dashboard/partials/filter-by-type-dropdown.php' ) ?>
 	<div class="col-md-3">
 		<select class="custom-select filter-listings-select" required="required" onchange="window.location.href=this.value;">
 			<option value="<?php echo esc_url( $endpoint ) ?>" <?php selected( $active_status === 'all' ) ?>>
@@ -72,7 +81,7 @@ $endpoint = wc_get_account_endpoint_url( 'my-listings' );
 		'icon' => 'icon-window',
 		'value' => number_format_i18n( absint( $stats->get( 'listings.published' ) ) ),
 		'description' => _x( 'Published', 'Dashboard stats', 'my-listing' ),
-		'background' => mylisting()->stats()->color_one,
+		'background' => mylisting()->get( 'stats.color1' ),
 	] );
 
 	// Pending listing count (pending_approval + pending_payment).
@@ -80,7 +89,7 @@ $endpoint = wc_get_account_endpoint_url( 'my-listings' );
 		'icon' => 'mi info_outline',
 		'value' => number_format_i18n( absint( $stats->get( 'listings.pending_approval' ) ) ),
 		'description' => _x( 'Pending Approval', 'Dashboard stats', 'my-listing' ),
-		'background' => mylisting()->stats()->color_two,
+		'background' => mylisting()->get( 'stats.color2' ),
 	] );
 
 	// Promoted listing count.
@@ -88,7 +97,7 @@ $endpoint = wc_get_account_endpoint_url( 'my-listings' );
 		'icon' => 'mi info_outline',
 		'value' => number_format_i18n( absint( $stats->get( 'listings.pending_payment' ) ) ),
 		'description' => _x( 'Pending Payment', 'Dashboard stats', 'my-listing' ),
-		'background' => mylisting()->stats()->color_three,
+		'background' => mylisting()->get( 'stats.color3' ),
 	] );
 
 	// Recent views card.
@@ -96,7 +105,7 @@ $endpoint = wc_get_account_endpoint_url( 'my-listings' );
 		'icon' => 'mi timer',
 		'value' => number_format_i18n( absint( $stats->get( 'listings.expired' ) ) ),
 		'description' => _x( 'Expired', 'Dashboard stats', 'my-listing' ),
-		'background' => mylisting()->stats()->color_four,
+		'background' => mylisting()->get( 'stats.color4' ),
 	] );
 	?>
 </div>
@@ -108,80 +117,41 @@ $endpoint = wc_get_account_endpoint_url( 'my-listings' );
 			<?php _e( 'You do not have any active listings.', 'my-listing' ); ?>
 		</div>
 	<?php else : ?>
-		<table class="job-manager-jobs">
-			<tbody>
-			<?php foreach ( $listings as $listing ): ?>
-				<tr>
-					<td class="l-type">
-						<div class="info listing-type">
-							<div class="value">
-								<?php echo $listing->type ? $listing->type->get_singular_name() : '&ndash;'; ?>
-							</div>
-						</div>
-					</td>
-					<td class="c27_listing_logo">
-						<img src="<?php echo $listing->get_logo('thumbnail') ?: c27()->image( 'marker.jpg' ) ?>">
-					</td>
-					<td class="job_title">
-						<?php if ( $listing->get_data('post_status') === 'publish' ) : ?>
-							<a href="<?php echo esc_url( $listing->get_link() ) ?>"><?php echo esc_html( $listing->get_name() ) ?></a>
-						<?php else : ?>
-							<a href="<?php echo esc_url( $listing->get_link() ) ?>"><?php echo esc_html( $listing->get_name() ) ?></a><small>(<?php echo $listing->get_status_label() ?>)</small>
-						<?php endif; ?>
-					</td>
-					<td class="listing-actions">
-						<ul class="job-dashboard-actions">
-							<?php if ( $listing->get_status() === 'pending_payment' ): ?>
-								<?php if ( ! empty( $pending_orders[ $listing->get_id() ] ) && ( $order = wc_get_order( $pending_orders[ $listing->get_id() ] ) ) ): ?>
-									<li class="cts-listing-action-view-order">
-										<a href="<?php echo esc_url( $order->get_view_order_url() ) ?>">
-											<?php _ex( 'Order details', 'User dashboard', 'my-listing' ) ?>
-										</a>
-									</li>
+		<section class="i-section listing-feed">
+			<div class="container-fluid">
+				<div class="row section-body grid">
+					<?php foreach ( $listings as $listing ): ?>
+						<div class="col-lg-4 col-md-3 col-sm-6 col-xs-12">
+							<?php echo \MyListing\get_preview_card( $listing->get_id() ); ?>
+							<div class="listing-actions">
+								<ul class="job-dashboard-actions">
+									<?php if ( $listing->get_status() === 'pending_payment' ): ?>
+										<?php if ( ! empty( $pending_orders[ $listing->get_id() ] ) && ( $order = wc_get_order( $pending_orders[ $listing->get_id() ] ) ) ): ?>
+											<li class="cts-listing-action-view-order">
+												<a href="<?php echo esc_url( $order->get_view_order_url() ) ?>">
+													<?php _ex( 'Order details', 'User dashboard', 'my-listing' ) ?>
+												</a>
+											</li>
 
-									<?php if ( $order->needs_payment() ): ?>
-										<li class="cts-listing-action-checkout">
-											<a href="<?php echo esc_url( $order->get_checkout_payment_url() ) ?>">
-												<?php _ex( 'Pay Now', 'User dashboard', 'my-listing' ) ?>
-											</a>
-										</li>
+											<?php if ( $order->needs_payment() ): ?>
+												<li class="cts-listing-action-checkout">
+													<a href="<?php echo esc_url( $order->get_checkout_payment_url() ) ?>">
+														<?php _ex( 'Pay Now', 'User dashboard', 'my-listing' ) ?>
+													</a>
+												</li>
+											<?php endif ?>
+										<?php endif ?>
 									<?php endif ?>
-								<?php endif ?>
-							<?php endif ?>
-							<?php if ( $listing->get_status() === 'pending' || $listing->get_status() === 'pending_payment'  ): ?>
-								<li class="cts-listing-action-preview">
-									<a class="preview"	 href="<?php echo $listing->get_link(); ?>">
-										<?php _ex( 'Preview', 'User dashboard', 'my-listing' ) ?>
-									</a>
-								</li>
-							<?php endif; ?>
 
-							<?php do_action( 'mylisting/user-listings/actions', $listing ) ?>
-							<?php /* @deprecated */ do_action( 'mylisting/dashboard/listing-actions', $listing ) ?>
-						</ul>
-					</td>
-					<td class="listing-info">
-						<?php if ( $package = $listing->get_product() ): ?>
-							<div class="info listing-package">
-								<div class="label"><?php _ex( 'Package:', 'User listings dashboard', 'my-listing' ) ?></div>
-								<div class="value"><?php echo esc_html( $package->get_name() ) ?></div>
-							</div>
-						<?php endif ?>
-						<div class="info created-at">
-							<div class="label"><?php _ex( 'Created:', 'User listings dashboard', 'my-listing' ) ?></div>
-							<div class="value"><?php echo date_i18n( get_option( 'date_format' ), strtotime( $listing->get_data('post_date') ) ) ?></div>
-						</div>
-						<div class="info expires-at">
-							<div class="label"><?php _ex( 'Expires:', 'User listings dashboard', 'my-listing' ) ?></div>
-							<div class="value">
-								<?php echo $listing->get_data('_job_expires') ? date_i18n( get_option( 'date_format' ), strtotime( $listing->get_data('_job_expires') ) ) : '&ndash;'; ?>
+									<?php do_action( 'mylisting/user-listings/actions', $listing ) ?>
+									<?php /* @deprecated */ do_action( 'mylisting/dashboard/listing-actions', $listing ) ?>
+								</ul>
 							</div>
 						</div>
-					</td>
-				</tr>
-			<?php endforeach ?>
-			</tbody>
-		</table>
+					<?php endforeach; ?>
+				</div>
+			</div>
+		</section>
 	<?php endif ?>
 
 	<nav class="job-manager-pagination">
