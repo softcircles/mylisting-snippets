@@ -44,7 +44,7 @@ $bookmarks = new WP_Query( [
 		<?php echo paginate_links( [
 			'format'  => '?_page=%#%',
 			'current'   => ! empty( $_GET['_page'] ) ? absint( $_GET['_page'] ) : 1,
-			'total'   => $query->max_num_pages,
+			'total'   => $bookmarks->max_num_pages,
 			'type'      => 'list',
 			'end_size'  => 3,
 			'mid_size'  => 3
