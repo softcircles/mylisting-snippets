@@ -1,0 +1,7 @@
+[text* your-name placeholder "Your name"]
+
+[email* your-email placeholder "Your Email address"]
+
+[textarea your-message 	x4 placeholder "Your message?"]
+
+[submit "Send Message"]
