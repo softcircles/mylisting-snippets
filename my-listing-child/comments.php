@@ -24,7 +24,7 @@ if ( is_singular('post') ) {
 
 <div class="container">
 	<div class="row">
-		<div class="<?php echo esc_attr( $comments_wrapper ) ?>">
+		<div class="<?php echo esc_attr( $comments_wrapper ) ?> comments-list-wrapper" data-current-page="<?php echo esc_attr( get_option( 'default_comments_page' ) === 'newest' ? get_comment_pages_count() : 1 ) ?>" data-page-count="<?php echo esc_attr( get_comment_pages_count() ) ?>">
 
 			<?php if (!comments_open()): ?>
 				<div class="no-results-wrapper">
@@ -51,8 +51,12 @@ if ( is_singular('post') ) {
 				<nav id="comment-nav-below" class="navigation comment-navigation" role="navigation">
 					<h2 class="screen-reader-text"><?php esc_html_e( 'Comment navigation', 'my-listing' ); ?></h2>
 					<div class="nav-links">
+					<?php if ( is_singular('job_listing') ): ?>
+						<div class="nav-next load-more"><a href="#" class="buttons button-5 full-width"><?php echo esc_html__( 'Load more', 'my-listing' ) ?></a></div>
+					<?php else: ?>
 						<div class="nav-previous"><?php previous_comments_link( esc_html__( 'Older Comments', 'my-listing' ) ); ?></div>
 						<div class="nav-next"><?php next_comments_link( esc_html__( 'Newer Comments', 'my-listing' ) ); ?></div>
+					<?php endif ?>
 					</div>
 				</nav>
 			<?php endif; ?>
@@ -114,7 +118,7 @@ if ( is_singular('post') ) {
 
 							<!-- Submit Field -->
 							<?php ob_start(); ?>
-							<button name="submit" type="submit" class="buttons button-2 button-animated">
+							<button name="submit" type="submit" class="buttons button-2 full-width">
 								<?php if (is_singular('job_listing') && $GLOBALS['case27_reviews_allow_rating']): ?>
 									<?php echo esc_html__('Submit review', 'my-listing') ?>
 								<?php else: ?>
@@ -125,18 +129,11 @@ if ( is_singular('post') ) {
 
 							<?php
 							$args = array(
-								'comment_field'       => $rating_field . $gallery_field . $submit_field,
+								'comment_field'       => $rating_field . $gallery_field . $message_field . $submit_field,
 								'class_submit'        => 'hide',
 								'cancel_reply_before' => ' &middot; <span>',
 								'cancel_reply_after'  => '</span>',
 							);
-
-							// $args = array(
-							// 	'comment_field'       => $rating_field . $gallery_field . $message_field . $submit_field,
-							// 	'class_submit'        => 'hide',
-							// 	'cancel_reply_before' => ' &middot; <span>',
-							// 	'cancel_reply_after'  => '</span>',
-							// );
 
 							$user_review = MyListing\Ext\Reviews\Reviews::has_user_reviewed( get_current_user_id(), get_the_ID() );
 
@@ -147,11 +144,12 @@ if ( is_singular('post') ) {
 									'gallery_field' => $gallery_field,
 									'author'        => $author_field,
 									'email'         => $email_field,
+									'comment_field' => $message_field,
 									'cookies' 		=> $cookies_field,
 									'submit'        => $submit_field,
 								);
 							} elseif ( $user_review ) {
-								$args['comment_field'] = $submit_field;
+								$args['comment_field'] = $gallery_field . $message_field . $submit_field;
 							}
 							?>
 
@@ -166,13 +164,16 @@ if ( is_singular('post') ) {
 										<form action="<?php echo esc_url( admin_url('admin-post.php') ); ?>" method="post" enctype="multipart/form-data">
 											<?php echo MyListing\Ext\Reviews\Reviews::get_ratings_field( $user_review, get_the_ID() ); ?>
 											<?php echo MyListing\Ext\Reviews\Reviews::get_gallery_field( $user_review, get_the_ID() ); ?>
-										
+											<div class="form-group">
+												<label><?php _e( 'Your Message', 'my-listing' ) ?></label>
+												<textarea rows="5" name="comment" required="required" placeholder="<?php echo esc_html__('Enter message...', 'my-listing') ?>"><?php echo get_comment_text( $user_review ) ?></textarea>
+											</div>
 											<input type="hidden" name="action" value="update_review">
 											<input type="hidden" name="listing_id" value="<?php echo esc_attr( get_the_ID() ) ?>">
 											<?php if ($GLOBALS['case27_reviews_allow_rating']): ?>
-												<button type="submit" class="buttons button-2 button-animated"><?php echo esc_html__('Update review', 'my-listing') ?></button>
+												<button type="submit" class="buttons button-2 full-width"><?php echo esc_html__('Update review', 'my-listing') ?></button>
 											<?php else: ?>
-												<button type="submit" class="buttons button-2 button-animated"><?php echo esc_html__('Update comment', 'my-listing') ?></button>
+												<button type="submit" class="buttons button-2 full-width"><?php echo esc_html__('Update comment', 'my-listing') ?></button>
 											<?php endif ?>
 										</form>
 									<?php endif ?>
