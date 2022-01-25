@@ -65,6 +65,9 @@ foreach ( (array) $options['footer']['sections'] as $section ) {
                     <?php if (isset($section['show_bookmark_button']) && $section['show_bookmark_button'] == 'yes'): ?>
                         <?php require locate_template( 'templates/single-listing/previews/partials/bookmark-button.php' ) ?>
                     <?php endif ?>
+                    <?php if (isset($section['show_compare_button']) && $section['show_compare_button'] == 'yes'): ?>
+                            <?php require locate_template( 'templates/single-listing/previews/partials/compare-button.php' ) ?>
+                        <?php endif ?>
                 </ul>
             </div>
         </div>
@@ -111,6 +114,9 @@ foreach ( (array) $options['footer']['sections'] as $section ) {
                             <?php if (isset($section['show_bookmark_button']) && $section['show_bookmark_button'] == 'yes'): ?>
                                 <?php require locate_template( 'templates/single-listing/previews/partials/bookmark-button.php' ) ?>
                             <?php endif ?>
+                            <?php if (isset($section['show_compare_button']) && $section['show_compare_button'] == 'yes'): ?>
+                            <?php require locate_template( 'templates/single-listing/previews/partials/compare-button.php' ) ?>
+                        <?php endif ?>
                         </ul>
                     </div>
                 <?php endif ?>
@@ -141,6 +147,9 @@ foreach ( (array) $options['footer']['sections'] as $section ) {
                         <?php endif ?>
                         <?php if (isset($section['show_bookmark_button']) && $section['show_bookmark_button'] == 'yes'): ?>
                             <?php require locate_template( 'templates/single-listing/previews/partials/bookmark-button.php' ) ?>
+                        <?php endif ?>
+                        <?php if (isset($section['show_compare_button']) && $section['show_compare_button'] == 'yes'): ?>
+                            <?php require locate_template( 'templates/single-listing/previews/partials/compare-button.php' ) ?>
                         <?php endif ?>
                     </ul>
                 </div>
@@ -180,7 +189,8 @@ foreach ( (array) $options['footer']['sections'] as $section ) {
     if ($section['type'] == 'actions' || $section['type'] == 'details') {
         if (
             ( isset($section['show_quick_view_button']) && $section['show_quick_view_button'] == 'yes' ) ||
-            ( isset($section['show_bookmark_button']) && $section['show_bookmark_button'] == 'yes' )
+            ( isset($section['show_bookmark_button']) && $section['show_bookmark_button'] == 'yes' ) ||
+            ( isset($section['show_compare_button']) && $section['show_compare_button'] == 'yes' )
          ): ?>
             <div class="listing-details actions c27-footer-section">
                 <div class="ld-info">
@@ -190,6 +200,9 @@ foreach ( (array) $options['footer']['sections'] as $section ) {
                         <?php endif ?>
                         <?php if (isset($section['show_bookmark_button']) && $section['show_bookmark_button'] == 'yes'): ?>
                             <?php require locate_template( 'templates/single-listing/previews/partials/bookmark-button.php' ) ?>
+                        <?php endif ?>
+                        <?php if (isset($section['show_compare_button']) && $section['show_compare_button'] == 'yes'): ?>
+                            <?php require locate_template( 'templates/single-listing/previews/partials/compare-button.php' ) ?>
                         <?php endif ?>
                     </ul>
                 </div>
