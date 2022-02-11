@@ -26,7 +26,11 @@ class Subscriptions {
 		add_filter( 'woocommerce_product_class' , [ $this, 'set_product_class' ], 10, 3 );
 
 		// Add to cart.
-		add_action( 'woocommerce_job_package_subscription_add_to_cart', '\WC_Subscriptions::subscription_add_to_cart', 30 );
+		if ( is_callable( '\WCS_Template_Loader::get_subscription_add_to_cart' ) ) {
+			add_action( 'woocommerce_job_package_subscription_add_to_cart', '\WCS_Template_Loader::get_subscription_add_to_cart', 30 );
+		} else {
+			add_action( 'woocommerce_job_package_subscription_add_to_cart', '\WC_Subscriptions::subscription_add_to_cart', 30 );
+		}
 
 		/* PAYMENTS */
 
@@ -73,9 +77,9 @@ class Subscriptions {
 
 		// When the subscription is renewed.
 		add_action( 'woocommerce_subscription_renewal_payment_complete', [ $this, 'subscription_renewed' ] );
-
+		
 		add_filter( 'woocommerce_subscriptions_is_renewal_order', [ $this, 'subscription_is_renewal' ], 99, 2 );
-
+		
 		// When the subscription is switched and only the item is changed.
 		add_action( 'woocommerce_subscription_item_switched', [ $this, 'subscription_item_switched' ], 10, 4 );
 
@@ -87,7 +91,7 @@ class Subscriptions {
 		// modify the subscription switch template
 		add_action( 'template_redirect', [ $this, 'switch_subscription_screen' ], 200 );
 	}
-
+	
 	public function subscription_is_renewal( $is_renewal, $subscription ) {
 		
 		if ( ! $is_renewal ) {
@@ -108,8 +112,10 @@ class Subscriptions {
 
 			update_post_meta( $listing->get_id(), 'is_listing_renewal', true );
 		}
+		
+		return $is_renewal;
 	}
-
+	
 	/**
 	 * Is this a subscription product?
 	 *
