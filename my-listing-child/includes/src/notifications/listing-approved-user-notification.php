@@ -13,30 +13,6 @@ class Listing_Approved_User_Notification extends Base_Notification {
 		$author;
 
 	public static function hook() {
-		
-		add_filter( 'woocommerce_subscriptions_is_renewal_order', function( $is_renewal, $subscription ) {
-			
-			if ( ! $is_renewal ) {
-				return $is_renewal;
-			}
-
-			foreach ( $subscription->get_items() as $item ) {
-				$listing_id = ! empty( $item['job_id'] ) ? absint( $item['job_id'] ) : false;
-				if ( ! $listing_id ) {
-					continue;
-				}
-				
-				$listing = \MyListing\Src\Listing::get( $listing_id );
-
-				if ( ! $listing ) {
-					continue;
-				}
-
-				update_post_meta( $listing->get_id(), 'is_listing_renewal', true );
-			}
-
-		}, 99, 2 );
-		
 		add_action( 'transition_post_status', function( $new_status, $old_status, $post ) {
 			// validate listing
 			if ( ! ( $post && $post->post_type === 'job_listing' ) ) {
@@ -47,18 +23,13 @@ class Listing_Approved_User_Notification extends Base_Notification {
 			if ( ! ( $new_status === 'publish' && in_array( $old_status, [ 'preview', 'pending', 'pending_payment', 'expired' ], true ) ) ) {
 				return;
 			}
-
-			$is_listing_renewal = get_post_meta( $post->ID, 'is_listing_renewal', true );
-			$_edit_last = get_post_meta( $post->ID, '_edit_last', true );
 			
-			if ( $_edit_last ) {
-				return;
-			}
+			$is_listing_renewal = get_post_meta( $post->ID, 'is_listing_renewal', true );
 			
 			if ( $is_listing_renewal ) {
 				return;
 			}
-
+			
 			return new self( [ 'listing-id' => $post->ID ] );
 		}, 40, 3 );
 	}
