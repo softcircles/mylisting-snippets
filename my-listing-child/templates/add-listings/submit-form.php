@@ -12,23 +12,28 @@ if ( ! defined( 'ABSPATH' ) ) {
 wp_enqueue_script( 'mylisting-listing-form' );
 wp_enqueue_style( 'mylisting-add-listing' );
 $can_post = is_user_logged_in() || ! mylisting_get_setting( 'submission_requires_account' );
+$listing_type = '';
 
-if ( $form == 'edit-listing' ) {
-	$listing = \MyListing\Src\Listing::get( $job_id );
-	$_REQUEST['listing_package'] = $listing->get_product_id();
+if ( isset( $_REQUEST['job_id'] ) && intval( $_REQUEST['job_id'] ) ) {
+	$listing = \MyListing\Src\Listing::get( $_REQUEST['job_id'] );
+
+	if ( $listing->type ) {
+		$listing_type = $listing->type->get_singular_name();
+	}
+
+} elseif ( ! empty( $_REQUEST['listing_type'] ) ) {
+	$listing_type = \MyListing\Src\Listing_Type::get_by_name( $_REQUEST['listing_type'] );
+	$listing_type = $listing_type->get_singular_name();
 }
-
-if ( ! empty( $_REQUEST['job_id'] ) && absint( $_REQUEST['job_id'] ) && $job_id == $_REQUEST['job_id'] && isset( $_REQUEST['action'] ) && 'edit' == $_REQUEST['action'] && empty( $_REQUEST['listing_package'] ) ) {
-	$listing = \MyListing\Src\Listing::get( $job_id );
-	$_REQUEST['listing_package'] = $listing->get_product_id();
-}
-
 ?>
 
 <div class="i-section">
 	<div class="container">
 		<div class="row section-title">
-			<h2 class="case27-primary-text"><?php _ex( 'Your listing details', 'Add listing form', 'my-listing' ) ?></h2>
+			<h2 class="case27-primary-text">
+				<?php _ex( 'Your listing details', 'Add listing form', 'my-listing' ) ?>
+				<?php echo $listing_type; ?>
+			</h2>
 		</div>
 		<form action="<?php echo esc_url( $action ); ?>" method="post" id="submit-job-form" class="job-manager-form light-forms c27-submit-listing-form" enctype="multipart/form-data">
 
@@ -60,14 +65,12 @@ if ( ! empty( $_REQUEST['job_id'] ) && absint( $_REQUEST['job_id'] ) && $job_id 
 						</div></div></div>
 						<div class="form-section-wrapper" id="form-section-<?php echo esc_attr( ! empty( $key ) ? $key : \MyListing\Utils\Random_Id::generate(7) ) ?>">
 							<div class="element form-section">
-							<?php if ( ( $icon = $field->get_prop('icon') ) && ( $label = $field->get_label() ) ): ?>
 								<div class="pf-head round-icon">
 									<div class="title-style-1">
-										<i class="<?php echo esc_attr( $icon ) ?>"></i>
-										<h5><?php echo esc_html( $label ) ?></h5>
+										<i class="<?php echo esc_attr( $field->get_prop('icon') ?: 'icon-pencil-2' ) ?>"></i>
+										<h5><?php echo esc_html( $field->get_label() ) ?></h5>
 									</div>
 								</div>
-							<?php endif ?>
 							<div class="pf-body">
 							<?php else:
 								$classes = [];
@@ -78,8 +81,16 @@ if ( ! empty( $_REQUEST['job_id'] ) && absint( $_REQUEST['job_id'] ) && $job_id 
 								<div class="fieldset-<?php echo esc_attr( $key ) ?> <?php echo esc_attr( 'field-type-'.$field->get_type() ) ?> form-group <?php echo join( ' ', array_map( 'esc_attr', $classes ) ) ?>">
 									<div class="field-head">
 										<label for="<?php echo esc_attr( $key ) ?>">
-											<?php echo $field->get_label() ?>
-											<?php echo $field->is_required() ? '' : ' <small>' . _x( '(optional)', 'Add listing form', 'my-listing' ) . '</small>' ?>
+											<?php
+												echo $field->get_label();
+												echo apply_filters(
+													'mylisting/submission/required-field-label',
+													! $field->is_required()
+														? ' <small>'._x( '(optional)', 'Add listing form', 'my-listing' ).'</small>'
+														: '',
+													$field
+												);
+											?>
 										</label>
 										<?php if ( ! empty( $field->get_description() ) ): ?>
 											<small class="description"><?php echo $field->get_description() ?></small>
@@ -113,13 +124,13 @@ if ( ! empty( $_REQUEST['job_id'] ) && absint( $_REQUEST['job_id'] ) && $job_id 
 							</div>
 
 							<div class="listing-form-submit-btn">
-								<button type="submit" name="submit_job" class="preview-btn button buttons button-2" value="submit">
+								<button type="submit" name="submit_job" class="preview-btn button buttons button-5" value="submit">
 									<?php echo esc_attr( $submit_button_text ) ?>
 								</button>
 
 								<?php if ( $form === 'submit-listing' ): ?>
-									<button type="submit" name="submit_job" class="skip-preview-btn button buttons button-3" value="submit--no-preview">
-										<?php echo esc_attr( _x( 'Skip preview and submit', 'Add listing form', 'my-listing' ) ) ?>
+									<button type="submit" name="submit_job" class="skip-preview-btn button buttons button-2" value="submit--no-preview">
+										<?php echo esc_attr( _x( 'Submit listing', 'Add listing form', 'my-listing' ) ) ?>
 									</button>
 								<?php endif ?>
 							</div>
