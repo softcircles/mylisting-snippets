@@ -50,6 +50,8 @@ class Reviews {
 		// Gallery action: on delete attachment and comment.
 		add_action( 'delete_comment', array( $this, 'delete_gallery_on_delete_comment' ) );
 		add_action( 'delete_attachment', array( $this, 'delete_gallery_data_on_delete_attachment' ) );
+
+		add_filter( 'comment_post_redirect', [ $this, 'redirect_back_to_listing_page' ], 50, 2 );
 	}
 
 	/* === FUNCTIONS === */
@@ -133,6 +135,7 @@ class Reviews {
 			// Save it as post meta as cache.
 			if ( $rating ) {
 				update_post_meta( $listing_id, '_case27_average_rating', $rating );
+				do_action( 'mylisting/reviews/updated-average-rating', $listing_id );
 			}
 		}
 
@@ -277,10 +280,8 @@ class Reviews {
 	 * @return string
 	 */
 	public static function get_ratings_field( $comment = false, $post_id = false ) {
-		global $case27_reviews_allow_rating;
-
-		// Bail if rating not allowed.
-		if ( ! isset( $case27_reviews_allow_rating ) || ! $case27_reviews_allow_rating ) {
+		// bail if rating is not allowed
+		if ( ! \MyListing\is_rating_enabled( $post_id ? $post_id : get_the_ID() ) ) {
 			return '';
 		}
 
@@ -382,7 +383,7 @@ class Reviews {
 
 			<div class="review-gallery-images">
 
-				<label class="review-gallery-add"><i class="material-icons">file_upload</i><input id="review-gallery-add-input" class="review-gallery-input" name="review_gallery[]" multiple="multiple" type="file"></label>
+				<label class="review-gallery-add"><i class="material-icons file_upload"></i><input id="review-gallery-add-input" class="review-gallery-input" name="review_gallery[]" multiple="multiple" type="file"></label>
 
 				<?php if ( $comment ) : // Editing Review. ?>
 					<?php
@@ -397,7 +398,7 @@ class Reviews {
 						<div class="review-gallery-image">
 							<?php echo wp_get_attachment_image( $attachment_id ); ?>
 							<input type="hidden" name="review_gallery_ids[]" value="<?php echo esc_attr( $attachment_id ); ?>">
-							<a class="review-gallery-image-remove" href="#"><i class="material-icons">delete</i></a>
+							<a class="review-gallery-image-remove" href="#"><i class="material-icons delete"></i></a>
 						</div><!-- .review-gallery-image -->
 					<?php endforeach; ?>
 
@@ -495,7 +496,7 @@ class Reviews {
 
 		// Show error message if user has already reviewed this listing.
 		if ( self::has_user_reviewed( get_current_user_id(), $listing->get_id() ) ) {
-			wp_die( wpautop( esc_html__( "You've already sumbitted a review on this listing.", 'my-listing' ) ), esc_html__( 'Comment Submission Failure', 'my-listing' ), array( 'back_link' => true ) );
+			wp_die( wpautop( esc_html__( "You've already submitted a review on this listing.", 'my-listing' ) ), esc_html__( 'Comment Submission Failure', 'my-listing' ), array( 'back_link' => true ) );
 		}
 	}
 
@@ -543,6 +544,7 @@ class Reviews {
 			delete_comment_meta( $comment_id, '_case27_post_rating' );
 		}
 		update_post_meta( $listing_id, '_case27_average_rating', self::get_listing_rating( $listing_id ) );
+		do_action( 'mylisting/reviews/updated-average-rating', $listing_id );
 
 		// Gallery Upload.
 		self::handle_uploads( $listing_id, $comment_id );
@@ -561,7 +563,7 @@ class Reviews {
 	 * @since unknown
 	 */
 	public function update_review() {
-		if ( ! is_user_logged_in() || ! isset( $_POST['listing_id'] ) || ! $_POST['listing_id'] ) {
+		if ( ! is_user_logged_in() || ! isset( $_POST['comment'], $_POST['listing_id'] ) || ! $_POST['listing_id'] ) {
 			return wp_die( '<p>' . __( 'Invalid request.', 'my-listing') . '</p>', __( 'Comment Submission Failure.', 'my-listing' ), array( 'back_link' => true ) );
 		}
 
@@ -571,8 +573,21 @@ class Reviews {
 			return wp_die( '<p>' . __( 'Invalid request.', 'my-listing') . '</p>', __( 'Comment Submission Failure.', 'my-listing' ), array( 'back_link' => true ) );
 		}
 
+		if ( empty( $_REQUEST['_update_review_nonce'] ) || ! wp_verify_nonce( $_REQUEST['_update_review_nonce'], 'update_review' ) ) {
+			return wp_die(
+				'<p>' . __( 'Invalid request.', 'my-listing') . '</p>',
+				__( 'Comment Submission Failure.', 'my-listing' ),
+				[ 'back_link' => true ]
+			);
+		}
+
 		$listing_id = $post->ID;
 		$comment_content = wp_kses_post( trim( $_POST['comment'] ) );
+
+		if ( $this->ml_blacklist_check( $comment_content ) ) {
+			return wp_die( '<p>' . __( 'Invalid request.', 'my-listing') . '</p>', __( 'Comment Submission Failure.', 'my-listing' ), array( 'back_link' => true ) );
+		}
+
 		$user_review = self::has_user_reviewed( get_current_user_id(), $listing_id );
 
 		if ( ! $user_review ) {
@@ -608,6 +623,7 @@ class Reviews {
 			delete_comment_meta( $comment_id, '_case27_post_rating' );
 		}
 		update_post_meta( $listing_id, '_case27_average_rating', self::get_listing_rating( $listing_id ) );
+		do_action( 'mylisting/reviews/updated-average-rating', $listing_id );
 
 		// Uploaded image action.
 		$gallery = get_comment_meta( $comment_id, '_case27_review_gallery', false );
@@ -641,7 +657,7 @@ class Reviews {
 		// Gallery Upload.
 		self::handle_uploads( $listing_id, $comment_id );
 
-		delete_comment_meta( $comment->comment_ID, '_mylisting_notification_sent' );
+		delete_comment_meta( $comment_id, '_mylisting_notification_sent' );
 		do_action( 'mylisting/review-updated', $comment_id, $listing_id );
 
 		// Redirect back to listing page.
@@ -651,6 +667,33 @@ class Reviews {
 
 		return wp_die( '<p>' . __( 'Your review has been updated.', 'my-listing') . '</p>', __( 'Success', 'my-listing' ), array( 'back_link' => true ) );
 	}
+
+	public function ml_blacklist_check( $value ) {
+        $value  = preg_replace( '/\s/', '', $value );
+        $mod_keys = trim( get_option( 'disallowed_keys' ) );
+
+        if ( '' === $mod_keys ) {
+            return false; // If moderation keys are empty.
+        }
+
+        $words = explode( "\n", $mod_keys );
+        foreach ( (array) $words as $word ) {
+            $word = trim( $word );
+
+            if ( empty( $word )
+            or 256 < strlen( $word ) ) {
+                continue;
+            }
+
+            $pattern = sprintf( '/\b%s\b/iu', preg_quote( $word, '#' ) );
+
+            if ( preg_match( $pattern, $value ) ) {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
 	/* === DELETE REVIEW === */
 
@@ -672,6 +715,7 @@ class Reviews {
 
 		// Update post rating average.
 		update_post_meta( $comment->comment_post_ID, '_case27_average_rating', self::get_listing_rating( $comment->comment_post_ID ) );
+		do_action( 'mylisting/reviews/updated-average-rating', $comment->comment_post_ID );
 	}
 
 	/* === UPDATE STATUS === */
@@ -691,6 +735,7 @@ class Reviews {
 		}
 
 		update_post_meta( $comment->comment_post_ID, '_case27_average_rating', self::get_listing_rating( $comment->comment_post_ID ) );
+		do_action( 'mylisting/reviews/updated-average-rating', $comment->comment_post_ID );
 	}
 
 	/* === DISPLAY OUTPUT === */
@@ -718,12 +763,15 @@ class Reviews {
 
 		// Gallery images.
 		$gallery = get_comment_meta( $comment->comment_ID, '_case27_review_gallery', false );
-		$gallery = is_array( $gallery ) ? $gallery : array();
+		$gallery = is_array( $gallery ) ? $gallery : [];
+		$gallery = array_filter( $gallery, function( $item ) {
+			return is_numeric( $item );
+		} );
 
 		// Ratings.
 		$categories = self::get_review_categories( $post->ID );
 		$ratings = get_comment_meta( $comment->comment_ID, '_case27_ratings', true );
-		$ratings = is_array( $ratings ) ? $ratings : array();
+		$ratings = is_array( $ratings ) ? $ratings : [];
 
 		// Only display category set in settings.
 		foreach( $ratings as $rating => $value ) {
@@ -734,7 +782,7 @@ class Reviews {
 
 		// No custom rating category is set, do not display rating in content.
 		if ( $ratings && 1 === count( $categories ) && isset( $categories['rating'] ) ) {
-			$ratings = array();
+			$ratings = [];
 		}
 
 		// Rating options.
@@ -840,5 +888,15 @@ class Reviews {
 			return false;
 		}
 		delete_comment_meta( $comment_id, '_case27_review_gallery', $attachment_id );
+	}
+
+	public function redirect_back_to_listing_page( $location, $comment ) {
+		if ( get_post_type( $comment->comment_post_ID ) !== 'job_listing' ) {
+			return $location;
+		}
+
+		return wp_validate_redirect( wp_sanitize_redirect(
+			add_query_arg( 'review-submitted', '1', $_SERVER['HTTP_REFERER'] )
+		) );
 	}
 }
