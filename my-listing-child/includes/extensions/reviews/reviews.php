@@ -30,6 +30,8 @@ class Reviews {
 			Reviews_Admin::instance();
 		}
 
+		add_filter( 'allow_empty_comment', '__return_true' );
+		
 		// Submit review.
 		add_action( 'pre_comment_on_post', array( $this, 'action_pre_comment_on_post' ) );
 		add_action( 'comment_post', array( $this, 'action_comment_post' ) );
@@ -563,7 +565,7 @@ class Reviews {
 	 * @since unknown
 	 */
 	public function update_review() {
-		if ( ! is_user_logged_in() || ! isset( $_POST['comment'], $_POST['listing_id'] ) || ! $_POST['listing_id'] ) {
+		if ( ! is_user_logged_in() || ! isset( $_POST['listing_id'] ) || ! $_POST['listing_id'] ) {
 			return wp_die( '<p>' . __( 'Invalid request.', 'my-listing') . '</p>', __( 'Comment Submission Failure.', 'my-listing' ), array( 'back_link' => true ) );
 		}
 
