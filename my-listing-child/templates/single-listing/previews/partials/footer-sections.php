@@ -8,8 +8,6 @@ if ( ! defined('ABSPATH') ) {
     exit;
 }
 
-$section_count = 0;
-
 foreach ( (array) $options['footer']['sections'] as $section ) {
 
     if ( $section['type'] === 'categories' ) {
@@ -30,7 +28,6 @@ foreach ( (array) $options['footer']['sections'] as $section ) {
             continue;
         }
 
-        $section_count++;
         $category_count = count( $terms );
         $first_category = array_shift( $terms );
         $first_category = new \MyListing\Src\Term( $first_category );
@@ -46,7 +43,7 @@ foreach ( (array) $options['footer']['sections'] as $section ) {
                         <span class="cat-icon" style="background-color: <?php echo esc_attr( $first_category->get_color() ) ?>;">
                             <?php echo $first_category->get_icon( [ 'background' => false ] ) ?>
                         </span>
-                        <span class="category-name"><?php echo esc_html( $first_category->get_name() ) ?></span>
+                        <span class="category-name"><?php echo esc_html( $first_category->get_full_name() ) ?></span>
                     </a>
                 </li>
 
@@ -69,6 +66,9 @@ foreach ( (array) $options['footer']['sections'] as $section ) {
                     <?php if (isset($section['show_bookmark_button']) && $section['show_bookmark_button'] == 'yes'): ?>
                         <?php require locate_template( 'templates/single-listing/previews/partials/bookmark-button.php' ) ?>
                     <?php endif ?>
+                    <?php if (isset($section['show_compare_button']) && $section['show_compare_button'] == 'yes'): ?>
+                            <?php require locate_template( 'templates/single-listing/previews/partials/compare-button.php' ) ?>
+                        <?php endif ?>
                 </ul>
             </div>
         </div>
@@ -84,12 +84,10 @@ foreach ( (array) $options['footer']['sections'] as $section ) {
         $related_items = (array) $field->get_related_items();
         if ( empty( $related_items ) ) {
             continue;
-        }
-
-        $section_count++; ?>
+        } ?>
 
         <?php foreach ( $related_items as $key => $related_item ):
-            if ( ! ( $related_item = \MyListing\Src\Listing::get( $related_item ) ) ) {
+            if ( ! ( $related_item = \MyListing\Src\Listing::get( $related_item ) ) || $related_item->get_status() !== 'publish' ) {
                 continue;
             }
 
@@ -117,6 +115,9 @@ foreach ( (array) $options['footer']['sections'] as $section ) {
                             <?php if (isset($section['show_bookmark_button']) && $section['show_bookmark_button'] == 'yes'): ?>
                                 <?php require locate_template( 'templates/single-listing/previews/partials/bookmark-button.php' ) ?>
                             <?php endif ?>
+                            <?php if (isset($section['show_compare_button']) && $section['show_compare_button'] == 'yes'): ?>
+                            <?php require locate_template( 'templates/single-listing/previews/partials/compare-button.php' ) ?>
+                        <?php endif ?>
                         </ul>
                     </div>
                 <?php endif ?>
@@ -124,8 +125,7 @@ foreach ( (array) $options['footer']['sections'] as $section ) {
         <?php endforeach ?>
     <?php }
 
-    if ( $section['type'] === 'author' && ( $listing->author instanceof \MyListing\Src\User ) && $listing->author->exists() ) {
-        $section_count++; ?>
+    if ( $section['type'] === 'author' && ( $listing->author instanceof \MyListing\Src\User ) && $listing->author->exists() ) { ?>
             <div class="event-host c27-footer-section">
                 <a href="<?php echo esc_url( $listing->author->get_link() ) ?>">
                     <?php if ( $avatar = $listing->author->get_avatar() ): ?>
@@ -149,13 +149,15 @@ foreach ( (array) $options['footer']['sections'] as $section ) {
                         <?php if (isset($section['show_bookmark_button']) && $section['show_bookmark_button'] == 'yes'): ?>
                             <?php require locate_template( 'templates/single-listing/previews/partials/bookmark-button.php' ) ?>
                         <?php endif ?>
+                        <?php if (isset($section['show_compare_button']) && $section['show_compare_button'] == 'yes'): ?>
+                            <?php require locate_template( 'templates/single-listing/previews/partials/compare-button.php' ) ?>
+                        <?php endif ?>
                     </ul>
                 </div>
             </div>
     <?php }
 
-    if ( $section['type'] === 'details' && ! empty( $section['details'] ) ) {
-        $section_count++; ?>
+    if ( $section['type'] === 'details' && ! empty( $section['details'] ) ) { ?>
         <div class="listing-details-3 c27-footer-section">
             <ul class="details-list">
                 <?php foreach ( (array) $section['details'] as $detail ) {
@@ -177,11 +179,7 @@ foreach ( (array) $options['footer']['sections'] as $section ) {
                             <?php if ( ! empty( $detail['icon'] ) ): ?>
                                 <i class="<?php echo esc_attr( $detail['icon'] ) ?>"></i>
                             <?php endif ?>
-                            <?php if ( is_numeric( $content ) ) : ?>
-                                <span><?php echo number_format_i18n($content) ?></span>
-                            <?php else : ?>
-                                <span><?php echo $content; ?></span>
-                            <?php endif; ?>
+                            <span><?php echo $content ?></span>
                         </li>
                     <?php }
                 } ?>
@@ -192,8 +190,9 @@ foreach ( (array) $options['footer']['sections'] as $section ) {
     if ($section['type'] == 'actions' || $section['type'] == 'details') {
         if (
             ( isset($section['show_quick_view_button']) && $section['show_quick_view_button'] == 'yes' ) ||
-            ( isset($section['show_bookmark_button']) && $section['show_bookmark_button'] == 'yes' )
-         ): $section_count++; ?>
+            ( isset($section['show_bookmark_button']) && $section['show_bookmark_button'] == 'yes' ) ||
+            ( isset($section['show_compare_button']) && $section['show_compare_button'] == 'yes' )
+         ): ?>
             <div class="listing-details actions c27-footer-section">
                 <div class="ld-info">
                     <ul>
@@ -203,13 +202,12 @@ foreach ( (array) $options['footer']['sections'] as $section ) {
                         <?php if (isset($section['show_bookmark_button']) && $section['show_bookmark_button'] == 'yes'): ?>
                             <?php require locate_template( 'templates/single-listing/previews/partials/bookmark-button.php' ) ?>
                         <?php endif ?>
+                        <?php if (isset($section['show_compare_button']) && $section['show_compare_button'] == 'yes'): ?>
+                            <?php require locate_template( 'templates/single-listing/previews/partials/compare-button.php' ) ?>
+                        <?php endif ?>
                     </ul>
                 </div>
             </div>
         <?php endif ?>
     <?php }
-}
-
-if ( $section_count < 1 ) {
-    echo '<div class="c27-footer-empty"></div>';
 }
