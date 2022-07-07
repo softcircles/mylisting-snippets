@@ -29,7 +29,7 @@ class Work_Hours {
 			__( 'Wednesday', 'my-listing' ),
 			__( 'Thursday', 'my-listing' ),
 			__( 'Friday', 'my-listing' ),
-			__( 'Saturday', 'my-listing' ),
+			__( 'Saturday', 'my-listing' )
 		];
 
 		$this->weekdays_l10n = array_combine( $this->weekdays, $this->weekdays_l10n );
@@ -37,7 +37,12 @@ class Work_Hours {
 		$this->to_parseable_format();
 
 		if ( ! empty( $this->raw_hours['timezone'] ) ) {
-			date_default_timezone_set( $this->raw_hours['timezone'] );
+			try {
+				$tz = new \DateTimeZone( $this->raw_hours['timezone'] );
+				if ( $tz->getLocation() ) {
+					date_default_timezone_set( $this->raw_hours['timezone'] );
+				}
+			} catch ( \Exception $e ) {}
 		}
 
 		$this->parse();
@@ -108,8 +113,8 @@ class Work_Hours {
 			}
 
 			if ( $day['status'] == 'by-appointment-only' ) {
-				$this->status = 'closed';
-				$this->message = __( 'Closed', 'my-listing' );
+				$this->status = 'appointment-only';
+				$this->message = __( 'By appointment only', 'my-listing' );
 				return false;
 			}
 		}
@@ -217,6 +222,23 @@ class Work_Hours {
 		return $this->message;
 	}
 
+	public function get_label_for_preview_card() {
+		$status = $this->get_status();
+		if ( $status === 'not-available' ) {
+			return '';
+		}
+
+		if ( in_array( $status, [ 'open', 'closing', 'open-all-day' ], true ) ) {
+			return _x( 'OPEN', 'Preview Card: Work hours status', 'my-listing' );
+		}
+
+		if ( $status === 'appointment-only' ) {
+			return _x( 'BY APPOINTMENT ONLY', 'Preview Card: Work hours status', 'my-listing' );
+		}
+
+		return _x( 'CLOSED', 'Preview Card: Work hours status', 'my-listing' );
+	}
+
 	public function get_active_day() {
 		return $this->active_day;
 	}
@@ -300,7 +322,14 @@ class Work_Hours {
 			return __( 'Today\'s work schedule is not available', 'my-listing' );
 		}
 
-		return sprintf( __( 'Open hours today:', 'my-listing' ) . ' <span>%s - %s</span>', $this->format_time( $ranges[0]['from'] ), $this->format_time( $ranges[0]['to'] ) );
+		$formatted_ranges = array_map( function( $range ) {
+			return $this->format_time( $range['from'] ).' - '.$this->format_time( $range['to'] );
+		}, $ranges );
+
+		return sprintf(
+			__( 'Open hours today:', 'my-listing' ) . ' <span>%s</span>',
+			join( ', ', $formatted_ranges )
+		);
 	}
 
 	public function get_schedule() {
@@ -376,5 +405,94 @@ class Work_Hours {
 		}
 
 		return $days;
+	}
+
+	public function get_short_format() {
+		$hours = [];
+
+		foreach ( $this->hours as $weekday => $ranges ) {
+			$day = substr( $weekday, 0, 2 );
+			$status = $ranges['status'];
+
+			if ( $status === 'closed-all-day' ) {
+				$hours[ $day ] = 'C';
+			}
+
+			if ( $status === 'by-appointment-only' ) {
+				$hours[ $day ] = 'A';
+			}
+
+			if ( $status === 'open-all-day' ) {
+				$hours[ $day ] = 'O';
+			}
+
+			if ( $ranges['status'] === 'enter-hours' ) {
+				unset( $ranges['status'] );
+				$hours[ $day ] = [];
+
+				foreach ( $ranges as $range ) {
+					$hours[ $day ][] = join( '-', $range );
+				}
+			}
+		}
+
+		if ( ! empty( $this->raw_hours['timezone'] ) ) {
+			$hours['Tz'] = $this->raw_hours['timezone'];
+		}
+
+		return $hours;
+	}
+
+	public static function parse_short_format( $short_hours ) {
+		$hours = [];
+		$day_map = [
+			'Mo' => 'Monday',
+			'Tu' => 'Tuesday',
+			'We' => 'Wednesday',
+			'Th' => 'Thursday',
+			'Fr' => 'Friday',
+			'Sa' => 'Saturday',
+			'Su' => 'Sunday',
+		];
+
+		if ( ! empty( $short_hours['Tz'] ) ) {
+			$hours['timezone'] = $short_hours['Tz'];
+			unset( $short_hours['Tz'] );
+		}
+
+		foreach ( $short_hours as $day => $ranges ) {
+			if ( ! isset( $day_map[ $day ] ) ) {
+				continue;
+			}
+
+			$weekday = $day_map[ $day ];
+
+			if ( $ranges === 'C' ) {
+				$hours[ $weekday ] = [ 'status' => 'closed-all-day' ];
+			}
+
+			if ( $ranges === 'A' ) {
+				$hours[ $weekday ] = [ 'status' => 'by-appointment-only' ];
+			}
+
+			if ( $ranges === 'O' ) {
+				$hours[ $weekday ] = [ 'status' => 'open-all-day' ];
+			}
+
+			if ( is_array( $ranges ) ) {
+				$hours[ $weekday ] = [];
+				$hours[ $weekday ]['status'] = 'enter-hours';
+
+				foreach ( $ranges as $range ) {
+					$range = explode( '-', $range );
+					$hours[ $weekday ][] = [
+						'from' => $range[0],
+						'to' => $range[1],
+					];
+				}
+			}
+		}
+
+		return new self( $hours );
 	}
 }
