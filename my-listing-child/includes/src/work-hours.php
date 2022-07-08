@@ -21,15 +21,15 @@ class Work_Hours {
 	public function __construct( $hours ) {
 		$this->raw_hours = $hours;
 		$this->timezone  = date_default_timezone_get();
-		$this->weekdays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+		$this->weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 		$this->weekdays_l10n = [
-			__( 'Sunday', 'my-listing' ),
 			__( 'Monday', 'my-listing' ),
 			__( 'Tuesday', 'my-listing' ),
 			__( 'Wednesday', 'my-listing' ),
 			__( 'Thursday', 'my-listing' ),
 			__( 'Friday', 'my-listing' ),
-			__( 'Saturday', 'my-listing' )
+			__( 'Saturday', 'my-listing' ),
+			__( 'Sunday', 'my-listing' )
 		];
 
 		$this->weekdays_l10n = array_combine( $this->weekdays, $this->weekdays_l10n );
