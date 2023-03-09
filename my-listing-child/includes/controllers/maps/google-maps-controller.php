@@ -23,7 +23,7 @@ class Google_Maps_Controller extends \MyListing\Controllers\Base_Controller {
 		$args = [
 			'key' => mylisting()->get( 'maps.gmaps_api_key' ),
 			'libraries' => 'places',
-			'callback'	=> 'initMap',
+			'callback'	=> 'Function.prototype',
 			'v' => 3,
 		];
 
@@ -35,15 +35,6 @@ class Google_Maps_Controller extends \MyListing\Controllers\Base_Controller {
 		wp_enqueue_script( 'google-maps', sprintf( 'https://maps.googleapis.com/maps/api/js?%s', http_build_query( $args ) ), [], null, true );
 		wp_enqueue_script( 'mylisting-google-maps' );
 		wp_enqueue_style( 'mylisting-google-maps' );
-		?>
-		<script type="text/javascript">
-			function initMap() {
-				
-			}
-			
-			window.initMap = initMap;
-</script>
-<?php
 	}
 
 	protected function set_skins() {
