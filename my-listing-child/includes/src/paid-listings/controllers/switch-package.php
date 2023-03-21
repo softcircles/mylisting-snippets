@@ -24,6 +24,12 @@ class Switch_Package {
 		// fires after the order has been paid and processed and the payment package has been created
 		add_action( 'mylisting/payments/switch/order-processed', [ $this, 'order_processed' ], 10, 2 );
 
+		// fires after the subscription has been activated, and the payment package has been created
+		add_action( 'mylisting/subscriptions/relist/order-processed', [ $this, 'relist_subscription_processed' ], 10, 2 );
+
+		// fires after the order has been paid and processed and the payment package has been created
+		add_action( 'mylisting/payments/relist/order-processed', [ $this, 'relist_order_processed' ], 10, 2 );
+
 		// fires after a package for switch/relist has been chosen, before the user is redirected to checkout
 		add_action( 'mylisting/payments/switch/product-selected', [ $this, 'product_selected' ], 10, 2 );
 
@@ -59,7 +65,7 @@ class Switch_Package {
 		}
 
 		$form = \MyListing\Src\Forms\Add_Listing_Form::instance();
-		$tree = \MyListing\Src\Paid_Listings\Util::get_package_tree_for_listing_type( $type );
+		$tree = \MyListing\Src\Paid_Listings\Util::get_package_tree_for_listing_type( $type, 'switch-package' );
 		$action = ! empty( $_GET['action'] ) ? $_GET['action'] : '';
 		$listing_id = ! empty( $_GET['job_id'] ) ? absint( $_GET['job_id'] ) : $form->get_job_id();
 		$listing = \MyListing\Src\Listing::get( $listing_id );
@@ -133,7 +139,7 @@ class Switch_Package {
 				throw new \Exception( _x( 'Something went wrong.', 'Switch package', 'my-listing' ) );
 			}
 
-			if ( ! \MyListing\Src\Paid_Listings\Util::validate_package( $_REQUEST['listing_package'], $listing->type->get_slug() ) ) {
+			if ( ! \MyListing\Src\Paid_Listings\Util::validate_package( $_REQUEST['listing_package'], $listing->type->get_slug() ) && $listing->type->settings['packages']['enabled'] !== false ) {
 				throw new \Exception( _x( 'Chosen package is not valid.', 'Switch package', 'my-listing' ) );
 			}
 
@@ -174,7 +180,7 @@ class Switch_Package {
 				: _x( 'Listing plan has been updated.', 'Switch Package', 'my-listing' );
 
 			wc_add_notice( $message, 'success' );
-			wp_safe_redirect( wc_get_account_endpoint_url( 'my-listings' ) );
+			wp_safe_redirect( wc_get_account_endpoint_url( \MyListing\my_listings_endpoint_slug() ) );
 			exit;
 		} catch (\Exception $e) {
 			// Log error message.
@@ -192,17 +198,18 @@ class Switch_Package {
 			return;
 		}
 
-		// Paid packages disabled for listing type.
-		if ( $listing->type->settings['packages']['enabled'] === false ) {
+		if ( apply_filters( 'mylisting/display-switch-action', true, $listing ) === false ) {
 			return;
 		}
 
 		$product = $listing->get_product();
+		$allow_switch = get_option( 'woocommerce_subscriptions_allow_switching' );
 		if (
 			$listing->get_status() === 'publish'
 			&& $product && $product->is_type( 'job_package_subscription' )
 			&& class_exists( '\WC_Subscriptions_Switcher' )
 			&& apply_filters( 'mylisting/enable-subscription-switch', true ) !== false
+			&& in_array( $allow_switch, ['variable_grouped', 'variable', 'grouped'], true )
 		) {
 			$package = $listing->get_package();
 			$order = $package ? $package->get_order() : false;
@@ -249,6 +256,13 @@ class Switch_Package {
 	 * @since 2.1.6
 	 */
 	public function product_selected( $listing, $product ) {
+		
+		// add package to cart, and redirect
+		$data = [
+			'job_id' => $listing->get_id(),
+			'assignment_type' => 'switch',
+		];
+
 		// on relist, update the status from expired to pending_payment
 		if ( $listing->get_status() === 'expired' ) {
 			wp_update_post( [
@@ -258,13 +272,13 @@ class Switch_Package {
 				'post_date_gmt' => current_time( 'mysql', 1 ),
 				'post_author' => get_current_user_id(),
 			] );
-		}
 
-		// add package to cart, and redirect
-		$data = [
-			'job_id' => $listing->get_id(),
-			'assignment_type' => 'switch',
-		];
+			// add package to cart, and redirect
+			$data = [
+				'job_id' => $listing->get_id(),
+				'assignment_type' => 'relist',
+			];
+		}
 
 		WC()->cart->add_to_cart( $product->get_id(), 1, '', '', $data );
 
@@ -306,7 +320,41 @@ class Switch_Package {
 	public function order_processed( $listing, $package ) {
 		wp_update_post( [
 			'ID' => $listing->get_id(),
-			'post_status' => 'pending',
+			'post_status' => 'publish',
+		] );
+
+		$package->assign_to_listing( $listing->get_id() );
+	}
+
+	/**
+	 * Fires after the subscription has been activated, and the payment package
+	 * has been created. Assign the package and publish listing.
+	 *
+	 * @since 2.1.6
+	 */
+	public function relist_subscription_processed( $listing, $package ) {
+		wp_update_post( [
+			'ID' => $listing->get_id(),
+			'post_date' => current_time( 'mysql' ),
+			'post_date_gmt' => current_time( 'mysql', 1 ),
+			'post_status' => 'publish',
+		] );
+
+		$package->assign_to_listing( $listing->get_id() );
+	}
+
+	/**
+	 * After the order has been paid and processed and the payment package is
+	 * created, update the listing package and publish it.
+	 *
+	 * @since 2.1.6
+	 */
+	public function relist_order_processed( $listing, $package ) {
+		wp_update_post( [
+			'ID' => $listing->get_id(),
+			'post_date' => current_time( 'mysql' ),
+			'post_date_gmt' => current_time( 'mysql', 1 ),
+			'post_status' => 'publish',
 		] );
 
 		$package->assign_to_listing( $listing->get_id() );
@@ -323,10 +371,19 @@ class Switch_Package {
 			throw new \Exception( _x( 'Couldn\'t process package.', 'Listing submission', 'my-listing' ) );
 		}
 
-		wp_update_post( [
-			'ID' => $listing->get_id(),
-			'post_status' => 'publish',
-		] );
+		if ( $listing->get_status() === 'expired' ) {
+			wp_update_post( [
+				'ID' => $listing->get_id(),
+				'post_date' => current_time( 'mysql' ),
+				'post_date_gmt' => current_time( 'mysql', 1 ),
+				'post_status' => 'publish',
+			] );
+		} else {
+			wp_update_post( [
+				'ID' => $listing->get_id(),
+				'post_status' => 'publish',
+			] );
+		}
 
 		$package->assign_to_listing( $listing->get_id() );
 	}
