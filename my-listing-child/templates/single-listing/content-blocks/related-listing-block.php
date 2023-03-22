@@ -57,3 +57,16 @@ if ( empty( $listings ) ) {
 		</div>
 	</div>
 </div>
+<script type='text/javascript'>
+	jQuery(document).ready(function( $ ){
+		// Isotope
+	    var $grid;
+	    if ($('body').hasClass('rtl')) {
+	        var $grid = $('.grid').isotope({
+	            originLeft: false,
+	        });
+	    } else {
+	        var $grid = $('.grid').isotope();
+	    }
+	});
+</script>
