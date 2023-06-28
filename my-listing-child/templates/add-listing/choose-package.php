@@ -20,6 +20,13 @@ $item_wrapper = 'col-md-4';
 if ( absint( $column_count ) === 4 && $item_count >= 4 ) {
 	$item_wrapper = 'col-md-3';
 }
+
+$type_selection = '';
+if ( ! empty( $_REQUEST['listing_type'] ) && ( $type = \MyListing\Src\Listing_Type::get_by_name( $_REQUEST['listing_type'] ) ) ) {
+	$type_selection = $type;
+}
+
+wp_print_styles( 'mylisting-package-selection-widget' );
 ?>
 
 <div class="row section-body row-eq-height">
@@ -34,6 +41,16 @@ if ( absint( $column_count ) === 4 && $item_count >= 4 ) {
 
 		// Set checked item.
 		$checked = ( intval( $selected ) === intval( $product->get_id() ) ) ? 1 : 0;
+
+		$total_limit = '';
+		if ( $type_selection ) {
+			$meta_key = sprintf( '%s_limit', $type_selection->get_slug() );
+
+			if ( $product->meta_exists( $meta_key ) ) {
+				$total_limit = $product->get_meta( $meta_key );
+			}
+		}
+
 		?>
 
 		<div class="<?php echo esc_attr( $item_wrapper ) ?> col-sm-6 col-xs-12">
@@ -56,11 +73,11 @@ if ( absint( $column_count ) === 4 && $item_count >= 4 ) {
 					<?php if ( is_array( $description ) ): ?>
 						<ul>
 							<?php foreach ( $description as $line ): ?>
-								<li><?php echo do_shortcode( $line ); ?></li>
+								<li><?php echo $line ?></li>
 							<?php endforeach ?>
 						</ul>
 					<?php else: ?>
-						<?php echo do_shortcode( $description ); ?>
+						<?php echo $description ?>
 					<?php endif ?>
 				</div>
 				<div class="select-package">
@@ -74,7 +91,12 @@ if ( absint( $column_count ) === 4 && $item_count >= 4 ) {
 
 							<div class="dropdown-menu">
 								<ul class="checkbox-plan-list owned-product-packages">
-									<?php foreach ( $packages as $package ): ?>
+									<?php foreach ( $packages as $package ) :
+										$listing_limit = '';
+										if ( $total_limit ) {
+											$listing_limit = \MyListing\Src\Paid_Listings\Util::get_count_listing_by_type( $type->get_slug(), $package->get_user_id(), $package->get_id(), 'case27_user_package' );
+										}
+									?>
 										<li>
 											<div class="md-checkbox">
 												<input type="radio" name="listing_package" value="<?php echo esc_attr( $package->get_id() ) ?>" id="user-package-<?php echo esc_attr( $package->get_id() ) ?>">
@@ -83,7 +105,9 @@ if ( absint( $column_count ) === 4 && $item_count >= 4 ) {
 											<label for="user-package-<?php echo esc_attr( $package->get_id() ) ?>" class="checkbox-plan-name"><?php echo $title ?></label>
 											<p class="checkbox-plan-desc">
 											<?php
-											if ( $package->get_limit() ) {
+											if ( $total_limit ) {
+												printf( _n( 'You have posted %s out of %d %s listing', 'You have posted %s out of %d %s listings', count( $listing_limit ), 'my-listing' ), count( $listing_limit ), $total_limit, $type_selection->get_name() );
+											} else if ( $package->get_limit() ) {
 												printf( _n( '%s listing posted out of %d', '%s listings posted out of %d', $package->get_count(), 'my-listing' ), $package->get_count(), $package->get_limit() );
 											} else {
 												printf( _n( '%s listing posted', '%s listings posted', $package->get_count(), 'my-listing' ), $package->get_count() );
