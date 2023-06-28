@@ -52,7 +52,7 @@ class Add_Listing {
 			$type = $listing->type;
 			// mlog( 'Type ID retrieved from given listing: '.$listing->get_id() );
 
-		// if the lsiting id isn't available yet, e.g. in add listing form step handler, then retrieve the listing type from request
+		// if the listing id isn't available yet, e.g. in add listing form step handler, then retrieve the listing type from request
 		} elseif ( $listing_type && ( $listing_type_obj = \MyListing\Src\Listing_Type::get_by_name( $listing_type ) ) ) {
 			$type = $listing_type_obj;
 			// mlog( 'Type ID retrieved from request.' );
@@ -68,19 +68,25 @@ class Add_Listing {
 			return $steps;
 		}
 
-		$steps['wc-choose-package'] = [
-			'name'     => __( 'Choose a package', 'my-listing' ),
-			'view'     => [ $this, 'choose_package' ],
-			'handler'  => [ $this, 'choose_package_handler' ],
-			'priority' => 5,
-		];
+		if ( ! ( ! empty( $_REQUEST['listing_package'] ) && ! empty( $_REQUEST['skip_selection'] ) ) ) {
+			$steps['wc-choose-package'] = [
+				'name'     => __( 'Choose a package', 'my-listing' ),
+				'view'     => [ $this, 'choose_package' ],
+				'handler'  => [ $this, 'choose_package_handler' ],
+				'priority' => 5,
+			];
+		}
 
-		$steps['wc-process-package'] = [
-			'name'     => '',
-			'view'     => false,
-			'handler'  => [ $this, 'process_package_handler' ],
-			'priority' => 25,
-		];
+		if ( ( isset( $_REQUEST['submit_job'] ) && $_REQUEST['submit_job'] !== 'save--no-preview' ) 
+			|| ( isset( $_REQUEST['continue'] ) && ! empty( $_REQUEST['continue'] ) )
+		) {
+			$steps['wc-process-package'] = [
+				'name'     => '',
+				'view'     => false,
+				'handler'  => [ $this, 'process_package_handler' ],
+				'priority' => 25,
+			];
+		}
 
 		return $steps;
 	}
@@ -96,8 +102,7 @@ class Add_Listing {
 		}
 
 		$form = \MyListing\Src\Forms\Add_Listing_Form::instance();
-		$tree = \MyListing\Src\Paid_Listings\Util::get_package_tree_for_listing_type( $type );
-
+		$tree = \MyListing\Src\Paid_Listings\Util::get_package_tree_for_listing_type( $type, 'add-listing' );
 		$listing_id = ! empty( $_GET['job_id'] ) ? absint( $_GET['job_id'] ) : $form->get_job_id();
 		?>
 		<section class="i-section c27-packages">
@@ -133,19 +138,49 @@ class Add_Listing {
 	public function choose_package_handler() {
 		$form = \MyListing\Src\Forms\Add_Listing_Form::instance();
 		try {
-			if ( empty( $_POST['listing_package'] ) || empty( $_REQUEST['listing_type'] ) ) {
+			if ( empty( $_REQUEST['listing_package'] ) || empty( $_REQUEST['listing_type'] ) ) {
 				throw new \Exception( _x( 'No package selected.', 'Listing submission', 'my-listing' ) );
 			}
 
-			if ( ! \MyListing\Src\Paid_Listings\Util::validate_package( $_POST['listing_package'], $_REQUEST['listing_type'] ) ) {
+			if ( ! \MyListing\Src\Paid_Listings\Util::validate_package( $_REQUEST['listing_package'], $_REQUEST['listing_type'] ) ) {
 				throw new \Exception( _x( 'Chosen package is not valid.', 'Listing submission', 'my-listing' ) );
 			}
 
+			// Validate claim packages that are hidden from add listing
+			if ( ! empty( $_REQUEST['listing_type'] ) && $type = \MyListing\Src\Listing_Type::get_by_name( $_REQUEST['listing_type'] ) ) {
+				if ( get_post( $product_id = $_REQUEST['listing_package'] )->post_type === 'product' ) {
+					$package = \MyListing\Src\Paid_Listings\Util::get_package_tree_for_listing_type( $type, 'add-listing', $product_id );
+					if (empty($package)) {
+						throw new \Exception( _x( 'Chosen package is not valid.', 'Listing submission', 'my-listing' ) );
+					}
+
+				} elseif ( get_post( $product_id = $_REQUEST['listing_package'] )->post_type === 'case27_user_package' && is_user_logged_in() ) {
+					$product_id = ( get_post($product_id)->post_type === 'case27_user_package' ) ? get_post_meta( get_post($product_id)->ID, '_product_id', true ) : $package->ID;
+					$package = \MyListing\Src\Paid_Listings\Util::get_package_tree_for_listing_type( $type, 'add-listing', $product_id );
+					if (empty($package)) {
+						throw new \Exception( _x( 'Chosen package is not valid.', 'Listing submission', 'my-listing' ) );
+					}
+				}
+			}
+
 			// Package is valid.
-			$package = get_post( $_POST['listing_package'] );
+			$package = get_post( $_REQUEST['listing_package'] );
 
 			// Store selection in cookie.
 			wc_setcookie( 'chosen_package_id', absint( $package->ID ) );
+
+			if ( mylisting_get_setting( 'submission_requires_account' ) && ! is_user_logged_in() ) {
+				$redirect = add_query_arg( [
+					'listing_package' => $package->ID,
+					'skip_selection' => 1,
+				], \MyListing\get_current_url() );
+
+				return wp_safe_redirect( add_query_arg(
+					'redirect',
+					urlencode( $redirect ),
+					\MyListing\get_login_url()
+				) );
+			}
 
 			// Go to next step.
 			$form->next_step();
@@ -164,7 +199,7 @@ class Add_Listing {
 	public function process_package_handler() {
 		$form = \MyListing\Src\Forms\Add_Listing_Form::instance();
 		$listing_id = $form->get_job_id();
-
+		
 		try {
 			if ( empty( $_COOKIE['chosen_package_id'] ) || ! $listing_id ) {
 				throw new \Exception( _x( 'Couldn\'t process package.', 'Listing submission', 'my-listing' ) );
@@ -172,17 +207,39 @@ class Add_Listing {
 
 			$listing = \MyListing\Src\Listing::get( $listing_id );
 			$package = get_post( $_COOKIE['chosen_package_id'] );
-			if ( ! ( $listing && $listing->editable_by_current_user() && $package && in_array( $package->post_type, [ 'product', 'case27_user_package' ] ) ) ) {
+			if ( ! ( $listing && $listing->type && $listing->editable_by_current_user() && $package && in_array( $package->post_type, [ 'product', 'case27_user_package' ] ) ) ) {
 				throw new \Exception( _x( 'Invalid request.', 'Listing submission', 'my-listing' ) );
 			}
 
+			if ( empty( $_REQUEST['listing_package'] ) || absint( $_REQUEST['listing_package'] ) !== absint( $package->ID ) ) {
+				throw new \Exception( _x( 'Invalid package.', 'Listing submission', 'my-listing' ) );
+			}
+
+			if ( ! \MyListing\Src\Paid_Listings\Util::validate_package( $_REQUEST['listing_package'], $listing->type->get_slug() ) ) {
+				throw new \Exception( _x( 'You are aleady reached the Package limit.', 'Listing submission', 'my-listing' ) );
+			}
+
+			$allowed_product_ids = array_map( 'absint', array_column(
+				$listing->type->get_packages(),
+				'package'
+			) );
+
 			// use available package
 			if ( $package->post_type === 'case27_user_package' ) {
-				do_action( 'mylisting/payments/submission/use-available-package', $listing, \MyListing\Src\Package::get( $package ) );
+				$pkg = \MyListing\Src\Package::get( $package );
+				if ( ! empty( $allowed_product_ids ) && ! in_array( absint( $pkg->get_product_id() ), $allowed_product_ids, true ) ) {
+					throw new \Exception( _x( 'Invalid package.', 'Listing submission', 'my-listing' ) );
+				}
+
+				do_action( 'mylisting/payments/submission/use-available-package', $listing, $pkg );
 			}
 
 			// buy new product
 			if ( $package->post_type === 'product' ) {
+				if ( ! empty( $allowed_product_ids ) && ! in_array( absint( $package->ID ), $allowed_product_ids, true ) ) {
+					throw new \Exception( _x( 'Invalid package.', 'Listing submission', 'my-listing' ) );
+				}
+
 				$product = wc_get_product( $package->ID );
 				if ( ! ( $product && $product->is_type( [ 'job_package', 'job_package_subscription' ] ) ) ) {
 					throw new \Exception( _x( 'Invalid product.', 'Listing submission', 'my-listing' ) );
@@ -221,35 +278,51 @@ class Add_Listing {
 		update_post_meta( $listing->get_id(), '_package_id', $product->get_id() );
 		update_post_meta( $listing->get_id(), '_claimed', $product->mark_verified() ? 1 : 0 );
 
-		// update status from `preview` to `pending_payment`
-		wp_update_post( [
-			'ID' => $listing->get_id(),
-			'post_status' => 'pending_payment',
-			'post_date' => current_time( 'mysql' ),
-			'post_date_gmt' => current_time( 'mysql', 1 ),
-			'post_author' => get_current_user_id(),
-		] );
+		if ( isset( $_REQUEST['submit_job'] ) && $_REQUEST['submit_job'] == 'save--no-preview' ) {
 
-		// add package to cart, and redirect
-		$data = [
-			'job_id' => $listing->get_id(),
-			'assignment_type' => 'submission',
-		];
+			// clear cookie
+			wc_setcookie( 'chosen_package_id', '', time() - HOUR_IN_SECONDS );
 
-		WC()->cart->add_to_cart( $product->get_id(), 1, '', '', $data );
+			$redirect_url = add_query_arg( [
+				'listing_type' => $listing->type->get_slug(),
+				'job_id' => $listing->get_id(),
+			], wc_get_account_endpoint_url( \MyListing\my_listings_endpoint_slug() ) );
 
-		// clear cookie
-		wc_setcookie( 'chosen_package_id', '', time() - HOUR_IN_SECONDS );
+			// redirect to dashboard page successfully
+			wp_redirect( $redirect_url );
+			exit;
 
-		// if the user has other items in their cart, redirect to cart page instead
-		// to avoid any accidental purchases
-		$redirect_url = WC()->cart->get_cart_contents_count() > 1
-			? wc_get_cart_url()
-			: wc_get_checkout_url();
+		} else {
+			// update status from `preview` to `pending_payment`
+			wp_update_post( [
+				'ID' => $listing->get_id(),
+				'post_status' => 'pending_payment',
+				'post_date' => current_time( 'mysql' ),
+				'post_date_gmt' => current_time( 'mysql', 1 ),
+				'post_author' => get_current_user_id(),
+			] );
 
-		// redirect to checkout page
-		wp_redirect( $redirect_url );
-		exit;
+			// add package to cart, and redirect
+			$data = [
+				'job_id' => $listing->get_id(),
+				'assignment_type' => 'submission',
+			];
+
+			WC()->cart->add_to_cart( $product->get_id(), 1, '', '', $data );
+
+			// clear cookie
+			wc_setcookie( 'chosen_package_id', '', time() - HOUR_IN_SECONDS );
+
+			// if the user has other items in their cart, redirect to cart page instead
+			// to avoid any accidental purchases
+			$redirect_url = WC()->cart->get_cart_contents_count() > 1
+				? wc_get_cart_url()
+				: wc_get_checkout_url();
+
+			// redirect to checkout page
+			wp_redirect( $redirect_url );
+			exit;
+		}
 	}
 
 	/**
@@ -259,9 +332,14 @@ class Add_Listing {
 	 * @since 2.1.6
 	 */
 	public function subscription_processed( $listing, $package ) {
+		$listing_status = mylisting_get_setting( 'submission_requires_approval' ) ? 'pending' : 'publish';
+		if ( $listing->get_status() === 'draft' ) {
+			$listing_status = 'draft';
+		}
+
 		wp_update_post( [
 			'ID' => $listing->get_id(),
-			'post_status' => mylisting_get_setting( 'submission_requires_approval' ) ? 'pending' : 'publish',
+			'post_status' => $listing_status,
 		] );
 
 		$package->assign_to_listing( $listing->get_id() );
@@ -274,9 +352,16 @@ class Add_Listing {
 	 * @since 2.1.6
 	 */
 	public function order_processed( $listing, $package ) {
+
+		if ( isset( $_REQUEST['submit_job'] ) && $_REQUEST['submit_job'] == 'save--no-preview' ) {
+			$listing_status = 'draft';
+		} else {
+			$listing_status = mylisting_get_setting( 'submission_requires_approval' ) ? 'pending' : 'publish';
+		}
+
 		wp_update_post( [
 			'ID' => $listing->get_id(),
-			'post_status' => 'publish',
+			'post_status' => $listing_status,
 		] );
 
 		$package->assign_to_listing( $listing->get_id() );
@@ -289,9 +374,19 @@ class Add_Listing {
 	 * @since 2.1.6
 	 */
 	public function use_available_package( $listing, $package ) {
+		if ( ! $package->belongs_to_current_user() ) {
+			throw new \Exception( _x( 'Couldn\'t process package.', 'Listing submission', 'my-listing' ) );
+		}
+
+		if ( isset( $_REQUEST['submit_job'] ) && $_REQUEST['submit_job'] == 'save--no-preview' ) {
+			$listing_status = 'draft';
+		} else {
+			$listing_status = mylisting_get_setting( 'submission_requires_approval' ) ? 'pending' : 'publish';
+		}
+
 		wp_update_post( [
 			'ID' => $listing->get_id(),
-			'post_status' => mylisting_get_setting( 'submission_requires_approval' ) ? 'pending' : 'publish',
+			'post_status' => $listing_status,
 		] );
 
 		$package->assign_to_listing( $listing->get_id() );
@@ -312,6 +407,8 @@ class Add_Listing {
 			'featured'       => $product->is_listing_featured(),
 			'mark_verified'  => $product->mark_verified(),
 			'use_for_claims' => $product->use_for_claims(),
+			'is_claimable' => $product->is_claimable(),
+			'hide_in_add_listing' => $product->hide_in_add_listing(),
 			'order_id'       => false,
 		] );
 
@@ -319,9 +416,15 @@ class Add_Listing {
 			throw new \Exception( _x( 'Couldn\'t create package.', 'Listing submission', 'my-listing' ) );
 		}
 
+		if ( isset( $_REQUEST['submit_job'] ) && $_REQUEST['submit_job'] == 'save--no-preview' ) {
+			$listing_status = 'draft';
+		} else {
+			$listing_status = mylisting_get_setting( 'submission_requires_approval' ) ? 'pending' : 'publish';
+		}
+
 		wp_update_post( [
 			'ID' => $listing->get_id(),
-			'post_status' => mylisting_get_setting( 'submission_requires_approval' ) ? 'pending' : 'publish',
+			'post_status' => $listing_status,
 		] );
 
 		$package->assign_to_listing( $listing->get_id() );
