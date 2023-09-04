@@ -1,7 +1,7 @@
 <?php
 $weekdays_short = [
-	__( 'Mon', 'my-listing' ), __( 'Tue', 'my-listing' ), __( 'Wed', 'my-listing' ),
-	__( 'Thu', 'my-listing' ), __( 'Fri', 'my-listing' ), __( 'Sat', 'my-listing' ), __( 'Sun', 'my-listing' )
+	 __( 'Sun', 'my-listing' ), __( 'Mon', 'my-listing' ), __( 'Tue', 'my-listing' ), __( 'Wed', 'my-listing' ),
+	__( 'Thu', 'my-listing' ), __( 'Fri', 'my-listing' ), __( 'Sat', 'my-listing' )
 ];
 
 $daystatuses = [
@@ -40,7 +40,7 @@ $schedule = new MyListing\Src\Work_Hours( ! empty( $field['value'] ) ? (array) $
 				$daykey = ( isset( $field['name'] ) ? $field['name'] : $key ) . "[{$weekday['day']}]";
 				?>
 
-				<div role="tabpanel" class="day-wrapper <?php echo esc_attr( 'day-status-' . $weekday['status'] ) ?> tab-pane fade <?php echo $weekday['day'] == 'Monday' ? 'active in' : '' ?>" id="day_<?php echo esc_attr( $weekday['day'] ) ?>">
+				<div role="tabpanel" class="day-wrapper <?php echo esc_attr( 'day-status-' . $weekday['status'] ) ?> tab-pane fade <?php echo $weekday['day'] == 'Sunday' ? 'active in' : '' ?>" id="day_<?php echo esc_attr( $weekday['day'] ) ?>">
 					<div class="repeater work-hours-repeater" data-list="<?php echo htmlspecialchars( json_encode( $schedule->get_day_ranges( $weekday['day'] ) ), ENT_QUOTES, 'UTF-8' ) ?>">
 						<div data-repeater-list="<?php echo esc_attr( $daykey ) ?>">
 							<?php // dump($weekday) ?>
@@ -87,13 +87,13 @@ $schedule = new MyListing\Src\Work_Hours( ! empty( $field['value'] ) ? (array) $
 			<div class="copy-hours-wrapper hidden">
 				<div class="days-wrapper">
 				<div class="md-checkbox"><input type="checkbox" data-day="all" id="all-days"><label for="all-days"><?php echo esc_html_x('All days', 'Copy work hours', 'my-listing') ?></label></div>
-				<div class="md-checkbox hidden"><input type="checkbox" data-day="1" id="monday-days"><label for="monday-days"><?php echo esc_html_x('Monday', 'Copy work hours', 'my-listing') ?></label></div>
+				<div class="md-checkbox hidden"><input type="checkbox" data-day="7" id="sunday-days"><label for="sunday-days"><?php echo esc_html_x('Sunday', 'Copy work hours', 'my-listing') ?></label></div>
+				<div class="md-checkbox"><input type="checkbox" data-day="1" id="monday-days"><label for="monday-days"><?php echo esc_html_x('Monday', 'Copy work hours', 'my-listing') ?></label></div>
 				<div class="md-checkbox"><input type="checkbox" data-day="2" id="tuesday-days"><label for="tuesday-days"><?php echo esc_html_x('Tuesday', 'Copy work hours', 'my-listing') ?></label></div>
 				<div class="md-checkbox"><input type="checkbox" data-day="3" id="wednesday-days"><label for="wednesday-days"><?php echo esc_html_x('Wednesday', 'Copy work hours', 'my-listing') ?></label></div>
 				<div class="md-checkbox"><input type="checkbox" data-day="4" id="thursday-days"><label for="thursday-days"><?php echo esc_html_x('Thursday', 'Copy work hours', 'my-listing') ?></label></div>
 				<div class="md-checkbox"><input type="checkbox" data-day="5" id="friday-days"><label for="friday-days"><?php echo esc_html_x('Friday', 'Copy work hours', 'my-listing') ?></label></div>
 				<div class="md-checkbox"><input type="checkbox" data-day="6" id="saturday-days"><label for="saturday-days"><?php echo esc_html_x('Saturday', 'Copy work hours', 'my-listing') ?></label></div>
-				<div class="md-checkbox"><input type="checkbox" data-day="7" id="sunday-days"><label for="sunday-days"><?php echo esc_html_x('Sunday', 'Copy work hours', 'my-listing') ?></label></div>
 				</div>
 				<input class="work-hours-message" type="hidden" value="<?php echo esc_attr_x('Pasted work hours to', 'Copy work hours', 'my-listing') ?>" nodays="<?php echo esc_attr_x('No days were selected', 'Copy work hours', 'my-listing') ?>">
 				<a class="copy-confirm buttons button-5" href="#"><?php echo esc_html_x('Copy to selected days', 'Copy work hours', 'my-listing') ?></a>
