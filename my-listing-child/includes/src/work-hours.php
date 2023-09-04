@@ -21,7 +21,7 @@ class Work_Hours {
 	public function __construct( $hours ) {
 		$this->raw_hours = $hours;
 		$this->timezone  = date_default_timezone_get();
-		$this->weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+		$this->weekdays = [ 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 		$this->weekdays_l10n = [
 			__( 'Monday', 'my-listing' ),
 			__( 'Tuesday', 'my-listing' ),
